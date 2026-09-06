@@ -485,7 +485,7 @@ MIT License - Xem file [LICENSE](LICENSE) để biết chi tiết.
 
 ## 👤 Tác giả
 
-**PyMaKaizu** - [GitHub](https://github.com/dmasntd)
+**PyMaKaizu** - [𝑫𝒎𝒂𝒔](https://github.com/dmasntd)
 
 ---
 
