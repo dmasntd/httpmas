@@ -27,7 +27,6 @@ print(r.json())
 ```bash
 pip install httpmas
 ```
-> 💡 **Ghi chú:** C extension sẽ tự động build khi cài. Nếu thất bại, thư viện vẫn hoạt động bình thường với Python fallback.
 
 ---
 
