@@ -98,7 +98,7 @@
 
 
 # Liên hệ
-- Bạn có thể yêu cầu tham gia dự án hoặc báo cáo hãy nhắn qua telegram @manhscuti
+- Bạn có thể yêu cầu tham gia dự án hoặc báo cáo hãy nhắn qua telegram [@manhscuti](https://t.me/@manhscuti)
 
 # Tài liệu
 - Bạn có thể xem tại đây: https://github.com/dmasntd/httpmas/blob/main/Docs.md
