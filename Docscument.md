@@ -1,8 +1,8 @@
-# 🚀 httpmas v3.6.0 - Major Protocol Fixes, WAF Bypass & Universal Cookie Support
+# httpmas v3.6.5
 
 Bản cập nhật lớn tập trung vào việc sửa các lỗ hổng chí mạng ở tầng giao thức (HTTP/1.1, TLS, Socket Pool) khiến thư viện bị chặn bởi các WAF khắt khe (như Facebook, Cloudflare). Đồng thời, chuẩn hóa API và khả năng quản lý Cookie để tương thích 100% với thư viện `requests` gốc, hỗ trợ đa nền tảng/đa website.
 
-## 🔥 Critical Bug Fixes (Sửa lỗi nghiêm trọng)
+## Sửa lỗi nghiêm trọng
 
 ### 1. Sửa lỗi mất Session Cookie (Multi-value Headers)
 - **Vấn đề:** Trước đây, C-Extension (`_httpmas_fast.c`) và Python fallback (`_fast.py`) gộp các header trùng tên bằng dấu phẩy (`, `). Điều này vi phạm RFC 7230 đối với header `Set-Cookie`, khiến CookieJar không thể parse và làm mất hoàn toàn session đăng nhập.
@@ -16,7 +16,7 @@ Bản cập nhật lớn tập trung vào việc sửa các lỗ hổng chí m�
 - **Vấn đề:** Hàm `matches_domain()` trong `cookies.py` có lỗi logic: nếu cookie không có thuộc tính `Domain` (rỗng), nó so sánh `request_host == ""` và luôn trả về `False`. Điều này khiến cookie không bao giờ được gửi đi.
 - **Giải pháp:** Sửa lại theo chuẩn RFC 6265: Nếu `domain` rỗng, mặc định khớp với mọi host (`return True`).
 
-## 🛡️ Security & WAF Bypass (Bảo mật & Vượt WAF)
+## Bảo mật & Vượt WAF
 
 ### 1. Giả lập TLS Fingerprint (JA3) & ALPN
 - **Nâng cấp `tls_manager.py`:** 
@@ -27,7 +27,7 @@ Bản cập nhật lớn tập trung vào việc sửa các lỗ hổng chí m�
 - **Vấn đề:** Hàm `_is_healthy()` trong `pool.py` dùng `select()` và hiểu sai dữ liệu TLS pending / Keep-Alive ACK là EOF, dẫn đến việc "giết nhầm" các SSL Socket đang khỏe mạnh, buộc phải tạo kết nối mới (tốn thời gian TLS Handshake).
 - **Giải pháp:** Tinh chỉnh logic check cho `SSLSocket`, phân biệt rõ giữa EOF thực sự và trạng thái chờ dữ liệu ứng dụng, giữ lại tối đa connection nóng (hot connections).
 
-## ✨ New Features & API Enhancements (Tính năng mới)
+## Tính năng mới
 
 ### 1. Universal CookieJar (Hỗ trợ mọi Website)
 - **Nâng cấp `cookies.py`:** Thêm hàm `update(cookie_dict: dict, url: str)` vào `CookieJar`.
