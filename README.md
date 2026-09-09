@@ -97,9 +97,12 @@
   - Chúng tôi cần thời gian phát triển lên hiện tại chỉ có hỗ trợ http1.1
   - Chúng tôi cũng đang tập trung cho tốc độ và ổn định
 
-# Nâng cấp và cập nhật tình trạng
+----
+
+## Nâng cấp và cập nhật tình trạng
 - Xem tại docs: https://github.com/dmasntd/httpmas/blob/main/Docscument.md
 
+----
 
 # Liên hệ
 - Bạn có thể yêu cầu tham gia dự án hoặc báo cáo hãy nhắn qua telegram [@manhscuti](https://t.me/@manhscuti)
