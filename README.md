@@ -103,6 +103,10 @@
 # Tài liệu
 - Bạn có thể xem tại đây: https://github.com/dmasntd/httpmas/blob/main/Docs.md
 
+# Đóng góp
+- [xxx](https://example.com)
+
+- Rất cảm ơn các bạn đã hỗ trợ 
 ---
 
 <p align="center">
