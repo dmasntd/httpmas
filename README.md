@@ -56,6 +56,8 @@
     asyncio.run(main())
    
    ```
+> Các bạn cũng có thể đọc [Tài liệu hướng dẫn](https://github.com/dmasntd/httpmas/blob/main/H%C6%B0%E1%BB%9BngD%E1%BA%ABn.md) để xem chi tiết hơn
+
 
 ## Cài đặt
  - Hiện tại các bạn có thể cài bằng lệnh sau
