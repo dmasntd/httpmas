@@ -7,6 +7,8 @@
 [![Contributors](https://img.shields.io/github/contributors/dmasntd/httpmas.svg)](https://github.com/dmasntd/httpmas/graphs/contributors)
 [![Docs](https://img.shields.io/badge/docs-passing-brightgreen.svg)](https://raw.githubusercontent.com/dmasntd/httpmas/refs/heads/main/document.dcm)
 
+----
+
 ## Sử dụng
  - Nó được thiết kết quen thuộc với đa số người dùng, các bạn có thể dùng theo ý muốn của mình
  - Nó cũng tương đồng như requests để không cảm thấy khó dùng
