@@ -94,7 +94,7 @@
   - Chúng tôi cũng đang tập trung cho tốc độ và ổn định
 
 # Nâng cấp và cập nhật tình trạng
-- Xem tại docs: 
+- Xem tại docs: https://github.com/dmasntd/httpmas/blob/main/Docscument.md
 
 
 # Liên hệ
