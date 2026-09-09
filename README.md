@@ -101,7 +101,7 @@
 - Bạn có thể yêu cầu tham gia dự án hoặc báo cáo hãy nhắn qua telegram @manhscuti
 
 # Tài liệu
-- Bạn có thể xem tại đây: https://raw.githubusercontent.com/dmasntd/httpmas/refs/heads/main/document.dcm
+- Bạn có thể xem tại đây: https://github.com/dmasntd/httpmas/blob/main/Docs.md
 
 ---
 
