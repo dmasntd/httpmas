@@ -29,3 +29,11 @@
 - Hiện tại đang ở phiên bản 3.5.9 mới nhất do Nguyễn Tấn Dũng phát hành bản vá đang ổn định cho thời điểm hiện tại, hiện tại chúng tôi vẫn sẽ nâng cấp nếu phát hiện thêm lỗi hoặc chúng tôi có thời gian rảnh
 - Không sử dụng phiên bản cũ hoặc các phiên bản do người khác phát hành chúng tôi không khuyến khích điều này vì ảnh hưởng tới chúng tôi rất nhiều
 - Chỉ dùng từ phiên bản 3. đổ lên còn trở lại không lên dùng vì rất kém và không xử lý tốt
+
+----
+
+# Phát hiện lỗi 9-9-2026
+- Hiện tại ngày 9-9-2026 chúng tôi phát hiện ra các lỗ hổng nghiêm trọng gây "hỏng" requests và xử lý kém hiệu quả
+- Bản phát hành lần này đưa version từ 3.5.9 lên 3.6.5 là vì sửa lại hoàn toàn cơ chế tầng thấp nhất, vá lại các lỗi xử lý tầng trung để không cho tầng cao hiều nhầm.
+#### Bản vá này được cập nhật trong đêm có thể sáng ngày 10-9-2026 sẽ được đưa lên pypi
+- Chúng tôi luôn báo trước phiên bản vì đã sửa xong và đang trong quá trình test thực tế.
