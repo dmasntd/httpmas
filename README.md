@@ -78,7 +78,7 @@
    ```
 
 ### Phát triển bởi tôi
-- Thư viện này được tôi "nấu" trên nền socket sẵn có
+- Thư viện này được tôi ***"nấu"*** trên nền socket sẵn có
 - Chúng tôi tận dùng socket để giảm tải các tầng nó đi qua tạo ra tốc độ nhanh chóng hơn
 - Cũng một phần giải quyết tốc độ cho server của mình
 
