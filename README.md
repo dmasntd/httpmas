@@ -79,8 +79,8 @@
 
 ### Phát triển bởi tôi
 - Thư viện này được tôi ***"nấu"*** trên nền socket sẵn có
-- Chúng tôi tận dùng socket để giảm tải các tầng nó đi qua tạo ra tốc độ nhanh chóng hơn
-- Cũng một phần giải quyết tốc độ cho server của mình
+- Chúng tôi tận dụng socket để giảm tải các tầng nó đi qua tạo ra tốc độ nhanh chóng hơn
+- Cũng một phần giải quyết tốc độ cũng như bảo mật cho server của mình
 
 ## Báo cáo và thực tế
 - Theo phân tích đến từ tác giả MinhAnhs chúng tôi đã so sánh tốc độ cho ra kết quả
