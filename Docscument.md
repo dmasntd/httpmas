@@ -39,4 +39,4 @@ cookie_dict = {"c_user": "123", "xs": "abc"}
 session.cookies.update(cookie_dict, url="https://mbasic.facebook.com") 
 ```
 
-> Lưu ý: Bản cập nhật chưa được đẩy hẳn lên pypi chúng tôi đang test lại trên máy nội bộ sẽ sớm cập nhật ngay trong đêm nay
+> Lưu ý: Bản cập nhật chưa được đẩy hẳn lên pip
