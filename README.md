@@ -66,7 +66,10 @@
 
    ```bash
    pip install httpmas
+   ```
 
+- CLI
+   ```bash
    httpmas --version <-- Lệnh kiểm tra phiên bản hiện tại
 
    httpmas --help <-- Lệnh xem cách dùng
