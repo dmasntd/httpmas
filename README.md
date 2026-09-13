@@ -109,6 +109,7 @@
 
 # Liên hệ
 - Bạn có thể yêu cầu tham gia dự án hoặc báo cáo hãy nhắn qua telegram [@manhscuti](https://t.me/@manhscuti)
+- Hiện tại telegram của tôi gặp vấn đề hãy liên hệ qua Discord: [Dmas](https://discord.com/channels/@minhanhscuti)
 
 # Tài liệu
 - Bạn có thể xem tại đây: https://github.com/dmasntd/httpmas/blob/main/Docs.md
