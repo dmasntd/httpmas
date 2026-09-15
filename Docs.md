@@ -35,5 +35,8 @@
 # Phát hiện lỗi 9-9-2026
 - Hiện tại ngày 9-9-2026 chúng tôi phát hiện ra các lỗ hổng nghiêm trọng gây "hỏng" requests và xử lý kém hiệu quả
 - Bản phát hành lần này đưa version từ 3.5.9 lên 3.6.5 là vì sửa lại hoàn toàn cơ chế tầng thấp nhất, vá lại các lỗi xử lý tầng trung để không cho tầng cao hiều nhầm.
-#### Bản vá này được cập nhật trong đêm có thể sáng ngày 10-9-2026 sẽ được đưa lên pypi
-- Chúng tôi luôn báo trước phiên bản vì đã sửa xong và đang trong quá trình test thực tế.
+
+# New
+- Hiện tại đến ngày 15-9-2026
+- Chúng tôi đã update muộn hơn so với dự kiến ban đầu vì 1 số lý do
+- Chúng tôi vẫn sẽ nâng cấp tiếp trong thời gian tới
