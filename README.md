@@ -41,7 +41,7 @@
         params={"q": "httpmas", "sort": "stars"}
    )
    
-   >>> Async 
+   >>> Async Requests
    from httpmas import asyncio
    async def main():
        r = await asyncio.requests.get("https://httpbin.org/json")
