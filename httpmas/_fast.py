@@ -1,7 +1,5 @@
 """
-C-acceleration wrapper cho httpmas v3.
-Import C extension nếu có, fallback Python nếu không.
-API giống hệt nhau → các module khác không cần biết backend nào đang chạy.
+Copyright by MinhAnhs aka manhscuti
 """
 try:
     from ._httpmas_fast import (
