@@ -1,7 +1,3 @@
-"""
-AsyncEngine — C-accelerated header parsing.
-Nâng cấp: raise_on_error=True mặc định, tự ném HTTPError khi server trả 4xx/5xx.
-"""
 import asyncio
 import socket
 import ssl
@@ -450,8 +446,6 @@ class AsyncRequestManager:
         self._engine = AsyncSocketEngine(default_timeout=timeout)
         self._error_dispatcher = ErrorDispatcher()
 
-    # ==================== RAISE HELPER ====================
-
     @staticmethod
     def _maybe_raise(response: Response, raise_on_error: bool) -> Response:
         """Tự động ném HTTPError khi server trả status >= 400."""
@@ -463,8 +457,6 @@ class AsyncRequestManager:
                 print_error=True,
             )
         return response
-
-    # ==================== PUBLIC API ====================
 
     async def async_get(self, url, headers=None, params=None, timeout=None, raise_on_error=True):
         return await self._request("GET", url, headers=headers, params=params, timeout=timeout, raise_on_error=raise_on_error)
@@ -503,8 +495,6 @@ class AsyncRequestManager:
         results = await asyncio.gather(*tasks, return_exceptions=False)
         self._error_dispatcher.stop()
         return list(results)
-
-    # ==================== HELPERS ====================
 
     @classmethod
     def _header_prefix(cls, key):
@@ -556,7 +546,6 @@ class AsyncRequestManager:
         except TypeError:
             return RequestsError(message)
 
-    # ==================== REQUEST LOGIC ====================
 
     async def _request_impl(self, method, url, headers=None, data=None, json=None, params=None, timeout=None, raise_on_error=True):
         method_upper = method.upper()
