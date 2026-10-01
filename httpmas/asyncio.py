@@ -11,8 +11,6 @@ Cách dùng:
     asyncio.run(main())
 """
 import asyncio as _stdlib_asyncio
-
-# Re-export stdlib asyncio (chỉ lấy những thứ thực sự tồn tại)
 from asyncio import (
     run,
     sleep,
