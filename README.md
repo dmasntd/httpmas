@@ -112,8 +112,8 @@
 ----
 
 # New
-- Tôi đã đẩy lên 1 nhánh v3.5.9 đây là nhánh phiên bản cũ nó tôi đẩy lên để 1 số Dev có thể giúp tôi, nhánh này sẽ không khai mã nguồn ```.c```, file chứa xử lý, và phân chia lại 1 nhánh v2.9.18 để tránh trong tương lai nhánh main được cập nhật gì đó ở nhánh main, lưu í bản v2.9.18 các bạn có thể lấy về tham khảo và nó không còn giá trị đóng góp do quá cũ, còn v3.5.9 sẽ là bản thay thế để các Dev hỗ trợ phát triển
-- Tôi sẽ đẩy lên đây 1 số bản cũ hơn nữa nhưng chỉ để giữ mã nguồn tránh làm mất, không phục vụ mục đích gì cả, nếu hỗ trợ hãy tìm vào nhanh 3.5.9.
+- Tôi đã đẩy lên 1 nhánh v3.5.9 đây là nhánh phiên bản cũ nó tôi đẩy lên để 1 số Dev có thể giúp tôi, nhánh này sẽ không công khai mã nguồn ```.c```, file chứa xử lý để các Dev có thể giúp tôi tạo ra thuật toán xử lý dựa trên mã tầng trên, và tôi đã phân chia lại bản v2.9.18 ra thành nhánh khác để tránh trong tương lai nhánh main được cập nhật gì đó, lưu í bản v2.9.18 các bạn có thể lấy về tham khảo và nó không còn giá trị đóng góp do quá cũ, còn v3.5.9 sẽ là bản thay thế để các Dev hỗ trợ phát triển.
+- Tôi đẩy lên bản v3.5.7 là nhánh cũ nó chưa có đủ tốt để dùng không có xử lý mạnh xử lý ở dạng sơ khai dễ lỗi
 
 ---- 
 
