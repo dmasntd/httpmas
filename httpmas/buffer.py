@@ -11,16 +11,8 @@ import ctypes
 import ctypes.util
 from typing import Optional
 
-
-# ============================================================
-# NATIVE C SEARCH (memchr / memmem)
-# ============================================================
 class _NativeSearch:
-    """Load libc/bionic/msvcrt và expose memchr/memmem.
-
-    Nếu không tìm thấy symbol, tự động fallback sang
-    bytes.find() của CPython (cũng là C-level).
-    """
+    """Load libc/bionic/msvcrt và expose memchr/memmem."""
 
     __slots__ = (
         "available", "memchr", "memmem",
@@ -102,21 +94,12 @@ class _NativeSearch:
 
 
 _NATIVE = _NativeSearch()
-
-# Đặt False nếu muốn tắt ctypes và chỉ dùng bytes.find().
 USE_NATIVE = True
-
-# Chỉ gọi ctypes khi vùng search >= ngưỡng này,
-# tránh overhead FFI trên buffer quá nhỏ.
 _MIN_NATIVE_LEN = 16
 
 
 def c_find(buf: bytearray, sub: bytes, start: int, end: int) -> int:
-    """Tìm sub trong buf[start:end].
-
-    Trả về index absolute, hoặc -1 nếu không thấy.
-    Ưu tiên memchr/memmem của libc, fallback bytes.find().
-    """
+    """Tìm sub trong buf[start:end]."""
     n = end - start
     m = len(sub)
 
@@ -136,8 +119,6 @@ def c_find(buf: bytearray, sub: bytes, start: int, end: int) -> int:
             idx = _memmem_find(buf, sub, start, n)
             if idx >= -1:
                 return idx
-
-    # Fallback CPython C-level (vẫn không phải Python loop).
     return buf.find(sub, start, end)
 
 
@@ -152,7 +133,6 @@ def _memchr_find(buf: bytearray, ch: int, start: int, n: int) -> int:
             return -1
         return start + (res - base)
     except Exception:
-        # -2 báo lỗi để caller fallback.
         return -2
     finally:
         arr = None
@@ -175,10 +155,6 @@ def _memmem_find(buf: bytearray, sub: bytes, start: int, n: int) -> int:
     finally:
         arr = None
 
-
-# ============================================================
-# BYTE BUFFER - Pre-allocated, zero-copy recv
-# ============================================================
 class ByteBuffer:
     """Bộ đệm bytearray pre-allocated.
 
@@ -197,7 +173,6 @@ class ByteBuffer:
     def __len__(self) -> int:
         return self._end - self._start
 
-    # ---------- capacity ----------
     def _ensure(self, needed: int) -> None:
         if len(self._buf) - self._end >= needed:
             return
@@ -230,7 +205,6 @@ class ByteBuffer:
         if self._start > 4096 and self._start * 2 > self._end:
             self._compact()
 
-    # ---------- input ----------
     def extend(self, data: bytes) -> None:
         """Append data (compat API)."""
         if not data:
@@ -241,10 +215,7 @@ class ByteBuffer:
         self._end += n
 
     def recv(self, sock, max_bytes: int = 65536) -> int:
-        """Zero-copy recv: socket C đổ thẳng vào bytearray.
-
-        Trả về số byte đọc, 0 nếu connection đóng.
-        """
+        """Zero-copy recv: socket C đổ thẳng vào bytearray."""
         self._ensure(max_bytes)
 
         mv = memoryview(self._buf)
@@ -259,7 +230,6 @@ class ByteBuffer:
             self._end += n
         return n
 
-    # ---------- search ----------
     def find(self, sub: bytes) -> int:
         """Tìm sub, trả index relative so với start, -1 nếu không thấy."""
         idx = c_find(self._buf, sub, self._start, self._end)
@@ -267,7 +237,6 @@ class ByteBuffer:
             return -1
         return idx - self._start
 
-    # ---------- read ----------
     def read(self, count: Optional[int] = None) -> bytes:
         if count is None:
             end = self._end
