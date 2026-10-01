@@ -20,6 +20,7 @@ from .response import Response
 from .exceptions import RequestsError
 from . import version as _version_module
 
+# Tương thích cả hai cách đặt tên trong version.py
 __version__ = getattr(
     _version_module, "__version__", None
 ) or getattr(_version_module, "version", "0.0.0")

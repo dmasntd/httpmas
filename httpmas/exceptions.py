@@ -1,4 +1,8 @@
-"""Hệ thống xử lý lỗi của httpmas."""
+"""
+Hệ thống xử lý lỗi của httpmas.
+Cung cấp RequestsError với hiển thị màu RGB trên terminal.
+Hỗ trợ print_error=False cho retry silent.
+"""
 
 import sys
 import threading
