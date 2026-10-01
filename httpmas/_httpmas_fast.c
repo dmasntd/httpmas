@@ -19,24 +19,12 @@
 
 static const char HEX_UP[] = "0123456789ABCDEF";
 
-/* ================================================================
- * INTERNAL HELPERS — memchr-based scanning (SIMD in libc)
- * ================================================================ */
-
-/*
- * Tìm vị trí \r\n\r\n trong [data, data+len).
- * Dùng memchr để nhảy nhanh tới \r (SIMD-accelerated),
- * rồi verify 3 byte tiếp. Nếu không match, tiếp tục từ \r+1.
- *
- * Trả về offset của \r đầu tiên, hoặc -1.
- */
 static Py_ssize_t
 _find_header_end_impl(const unsigned char *data, Py_ssize_t len)
 {
     Py_ssize_t pos = 0;
 
     while (pos <= len - 4) {
-        /* SIMD scan: nhảy tới \r tiếp theo */
         const unsigned char *cr = (const unsigned char *)memchr(
             data + pos, '\r', len - pos
         );
@@ -45,7 +33,6 @@ _find_header_end_impl(const unsigned char *data, Py_ssize_t len)
 
         pos = cr - data;
 
-        /* Verify \r\n\r\n tại vị trí này */
         if (pos + 3 < len
             && data[pos + 1] == '\n'
             && data[pos + 2] == '\r'
@@ -54,17 +41,12 @@ _find_header_end_impl(const unsigned char *data, Py_ssize_t len)
             return pos;
         }
 
-        /* Không match, nhảy qua \r này và tiếp tục */
         pos++;
     }
 
     return -1;
 }
 
-/*
- * Tìm cuối dòng hiện tại (trước \r\n hoặc \n).
- * Trả về pointer tới cuối dòng, hoặc end nếu không tìm thấy.
- */
 static const char *
 _find_line_end(const char *data, const char *end)
 {
@@ -72,20 +54,14 @@ _find_line_end(const char *data, const char *end)
     if (cr != NULL) {
         if (cr + 1 < end && *(cr + 1) == '\n')
             return cr;
-        /* \r đơn lẻ (hiếm), trả về chính nó */
         return cr;
     }
-    /* Không có \r, thử \n đơn lẻ */
     const char *lf = (const char *)memchr(data, '\n', end - data);
     if (lf != NULL)
         return lf;
     return end;
 }
 
-/* ================================================================
- * find_header_end(buf, start, end) -> int
- * Python API: nhận bytearray/bytes, tìm \r\n\r\n.
- * ================================================================ */
 static PyObject *
 py_find_header_end(PyObject *self, PyObject *args)
 {
@@ -120,18 +96,11 @@ py_find_header_end(PyObject *self, PyObject *args)
     PyBuffer_Release(&buf);
 
     if (result >= 0)
-        result += start;  /* Convert to absolute index */
+        result += start;
 
     return PyLong_FromSsize_t(result);
 }
 
-/* ================================================================
- * parse_response_head(head_bytes) -> (status, reason, version, headers)
- *
- * Zero-copy parsing: làm việc trực tiếp trên pointer.
- * memchr-based scanning cho line endings và colon separators.
- * Chỉ tạo Python object khi đã xác định boundary.
- * ================================================================ */
 static PyObject *
 py_parse_response_head(PyObject *self, PyObject *args)
 {
@@ -148,19 +117,14 @@ py_parse_response_head(PyObject *self, PyObject *args)
     PyObject *result     = NULL;
 
     const char *end = data + data_len;
-
-    /* ---- Tìm cuối status line bằng memchr ---- */
     const char *line_end = _find_line_end(data, end);
     Py_ssize_t sline_len = line_end - data;
 
-    /* ---- Validate HTTP version prefix ---- */
     if (sline_len < 5 || memcmp(data, "HTTP/", 5) != 0) {
         PyErr_SetString(PyExc_ValueError, "Invalid HTTP version prefix");
         return NULL;
     }
 
-    /* ---- Parse status line: HTTP/x.x CODE REASON ---- */
-    /* Tìm space thứ nhất bằng memchr (SIMD) */
     const char *sp1 = (const char *)memchr(data, ' ', sline_len);
     if (!sp1) {
         PyErr_SetString(PyExc_ValueError, "Status line không hợp lệ");
@@ -171,7 +135,6 @@ py_parse_response_head(PyObject *self, PyObject *args)
     const char *code_start = sp1 + 1;
     Py_ssize_t remain = line_end - code_start;
 
-    /* Tìm space thứ hai bằng memchr (SIMD) */
     const char *sp2 = (const char *)memchr(code_start, ' ', remain);
 
     int status_code = 0;
@@ -202,13 +165,11 @@ py_parse_response_head(PyObject *self, PyObject *args)
         status_code = status_code * 10 + (c - '0');
     }
 
-    /* ---- Validate status code range ---- */
     if (status_code < 100 || status_code > 599) {
         PyErr_SetString(PyExc_ValueError, "Status code ngoài khoảng 100-599");
         return NULL;
     }
 
-    /* ---- Version string (uppercase) ---- */
     char ver_buf[32];
     Py_ssize_t vl = ver_len < 31 ? ver_len : 31;
     for (Py_ssize_t i = 0; i < vl; i++) {
@@ -228,37 +189,29 @@ py_parse_response_head(PyObject *self, PyObject *args)
     headers = PyDict_New();
     if (!headers) goto error;
 
-    /* ---- Parse headers: memchr-based line scanning ---- */
     {
-        /* Nhảy qua CRLF cuối status line */
         const char *pos = line_end;
         if (pos < end && *pos == '\r') pos++;
         if (pos < end && *pos == '\n') pos++;
 
         while (pos < end) {
-            /* Tìm cuối dòng hiện tại bằng memchr (SIMD) */
             const char *hend = _find_line_end(pos, end);
 
             if (hend == pos) {
-                /* Dòng trống = hết headers */
                 break;
             }
 
             Py_ssize_t hlen = hend - pos;
 
-            /* Tìm dấu ':' bằng memchr (SIMD) */
             const char *colon = (const char *)memchr(pos, ':', hlen);
 
             if (colon) {
-                /* Key: trim trailing spaces/tabs */
                 const char *ks = pos;
                 const char *ke = colon;
                 while (ke > ks && (ke[-1] == ' ' || ke[-1] == '\t')) ke--;
-                /* Key: trim leading spaces/tabs */
                 while (ks < ke && (*ks == ' ' || *ks == '\t')) ks++;
                 Py_ssize_t klen = ke - ks;
 
-                /* Value: trim leading/trailing spaces/tabs */
                 const char *vs = colon + 1;
                 const char *ve = hend;
                 while (vs < ve && (*vs == ' ' || *vs == '\t')) vs++;
@@ -266,7 +219,6 @@ py_parse_response_head(PyObject *self, PyObject *args)
                 Py_ssize_t vlen = ve - vs;
 
                 if (klen > 0) {
-                    /* Lowercase key: stack buffer cho key ngắn */
                     char kbuf_stack[512];
                     char *kbuf;
                     int key_malloced = 0;
@@ -291,7 +243,6 @@ py_parse_response_head(PyObject *self, PyObject *args)
                     PyObject *pv = PyUnicode_DecodeLatin1(vs, vlen, "replace");
                     if (!pv) { Py_DECREF(pk); goto error; }
 
-                    /* Duplicate headers: gộp ", " (RFC 7230 §3.2.2) */
                     PyObject *existing = PyDict_GetItemWithError(headers, pk);
                     if (existing == NULL) {
                         if (PyErr_Occurred()) {
@@ -315,14 +266,12 @@ py_parse_response_head(PyObject *self, PyObject *args)
                 }
             }
 
-            /* Nhảy qua CRLF cuối dòng */
             pos = hend;
             if (pos < end && *pos == '\r') pos++;
             if (pos < end && *pos == '\n') pos++;
         }
     }
 
-    /* ---- Build result ---- */
     result = PyTuple_New(4);
     if (!result) goto error;
 
@@ -344,13 +293,6 @@ error:
     return NULL;
 }
 
-/* ================================================================
- * parse_headers_raw(buf, start, end) -> (status, reason, version, headers, body_offset)
- *
- * Zero-copy từ Py_buffer: parse trực tiếp trên socket buffer.
- * Trả về body_offset = vị trí byte đầu tiên của body trong buffer.
- * Không cần extract header bytes trước rồi mới parse.
- * ================================================================ */
 static PyObject *
 py_parse_headers_raw(PyObject *self, PyObject *args)
 {
@@ -374,7 +316,6 @@ py_parse_headers_raw(PyObject *self, PyObject *args)
     const char *data = (const char *)buf.buf + start;
     Py_ssize_t region_len = end - start;
 
-    /* Tìm \r\n\r\n bằng memchr-based scan */
     Py_ssize_t header_end_offset = _find_header_end_impl(
         (const unsigned char *)data, region_len
     );
@@ -385,17 +326,13 @@ py_parse_headers_raw(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    /* Parse header block */
     Py_ssize_t header_block_len = header_end_offset;
-
-    /* Tạo bytes object cho header block để reuse parse_response_head logic */
     PyObject *head_bytes = PyBytes_FromStringAndSize(data, header_block_len);
-    PyBuffer_Release(&buf);  /* Release buffer sớm, đã copy xong header */
+    PyBuffer_Release(&buf);
 
     if (!head_bytes)
         return NULL;
 
-    /* Gọi parse_response_head với header bytes */
     PyObject *parse_args = PyTuple_Pack(1, head_bytes);
     Py_DECREF(head_bytes);
     if (!parse_args)
@@ -407,8 +344,7 @@ py_parse_headers_raw(PyObject *self, PyObject *args)
     if (!head_result)
         return NULL;
 
-    /* Thêm body_offset vào result: (status, reason, version, headers, body_offset) */
-    Py_ssize_t body_offset = start + header_end_offset + 4;  /* +4 cho \r\n\r\n */
+    Py_ssize_t body_offset = start + header_end_offset + 4;
 
     PyObject *full_result = PyTuple_New(5);
     if (!full_result) {
@@ -416,7 +352,6 @@ py_parse_headers_raw(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    /* Copy 4 phần tử từ head_result */
     for (int i = 0; i < 4; i++) {
         PyObject *item = PyTuple_GET_ITEM(head_result, i);
         Py_INCREF(item);
@@ -424,7 +359,6 @@ py_parse_headers_raw(PyObject *self, PyObject *args)
     }
     Py_DECREF(head_result);
 
-    /* Thêm body_offset */
     PyObject *py_offset = PyLong_FromSsize_t(body_offset);
     if (!py_offset) {
         Py_DECREF(full_result);
@@ -435,10 +369,6 @@ py_parse_headers_raw(PyObject *self, PyObject *args)
     return full_result;
 }
 
-/* ================================================================
- * urlencode_value(value_str) -> str
- * Small-buffer optimization + GIL release cho input lớn.
- * ================================================================ */
 static PyObject *
 _urlencode_raw(const char *data, Py_ssize_t len)
 {
@@ -505,10 +435,6 @@ py_urlencode_value(PyObject *self, PyObject *args)
     return _urlencode_raw(input, input_len);
 }
 
-/* ================================================================
- * parse_chunk_size(line_bytes) -> int
- * Chunk line length limit 8192 bytes.
- * ================================================================ */
 static PyObject *
 py_parse_chunk_size(PyObject *self, PyObject *args)
 {
@@ -560,8 +486,6 @@ py_parse_chunk_size(PyObject *self, PyObject *args)
 
     return PyLong_FromUnsignedLongLong(size);
 }
-
-/* ================================================================ */
 
 static PyMethodDef module_methods[] = {
     {"find_header_end",     py_find_header_end,     METH_VARARGS,
