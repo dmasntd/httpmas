@@ -42,17 +42,13 @@ from .cookies import CookieJar, Cookie, CookiePolicy
 from .auth import AuthBase, BasicAuth, BearerAuth, DigestAuth, APIKeyAuth
 from .headers import CaseInsensitiveHeaders
 from .redirect import RedirectHandler
-
-# Import asyncio module con (from httpmas import asyncio)
 from . import asyncio
-
 from . import version as _version_module
 
 version = getattr(
     _version_module, "version", None
 ) or getattr(_version_module, "__version__", "0.0.0")
 
-# Gắn Session vào module requests để tương thích API chuẩn
 requests.Session = Session
 requests.AsyncSession = AsyncSession
 requests.CookieJar = CookieJar
