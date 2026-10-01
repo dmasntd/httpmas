@@ -1,6 +1,7 @@
-"""Phiên bản của thư viện httpmas."""
-#By MinhAnhs
+"""
+Phiên bản của thư viện httpmas.
+"""
 
-__version__ = "2.9.18"
+__version__ = "3.5.9"
 __author__ = "PyMaKaizu"
 __license__ = "MIT"
