@@ -1,18 +1,3 @@
-/*
- * httpmas C-acceleration module v3.
- *
- * Tối ưu:
- * - memchr-based scanning (SIMD trong libc: SSE2/AVX2 trên x86, NEON trên ARM)
- * - Zero-copy input: parse trực tiếp trên pointer, không copy intermediate
- * - GIL release cho buffer >= 64KB
- * - Small-buffer optimization cho urlencode
- * - Duplicate headers gộp ", " (RFC 7230 §3.2.2)
- * - Validate HTTP version prefix, status code 100-599
- * - Chunk line length limit 8192
- *
- * Hỗ trợ: Windows (MSVC), macOS (clang), Linux (gcc), Termux (clang).
- * Yêu cầu: Python >= 3.8
- */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
