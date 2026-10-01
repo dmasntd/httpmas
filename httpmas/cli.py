@@ -1,4 +1,9 @@
-#By Nguyễn Tấn Dũng
+"""
+Giao diện dòng lệnh (CLI) cho httpmas.
+Banner cyberpunk với logo ASCII gradient,
+khung bảng neon căn chỉnh chính xác, màu viền đồng bộ 4 góc.
+"""
+
 import os
 import re
 import sys
@@ -9,6 +14,9 @@ import platform
 from .version import __version__
 
 
+# ============================================================
+# TERMINAL COLOR - PALETTE NEON RỰC RỠ
+# ============================================================
 class TerminalColor:
     """Quản lý mã màu RGB TrueColor với palette neon rực rỡ."""
 
@@ -121,7 +129,20 @@ class TerminalColor:
 
         return "".join(result) + cls.RESET
 
+
+# ============================================================
+# TABLE BUILDER - KHUNG NEON CĂN CHỈNH + ĐỒNG BỘ MÀU 4 GÓC
+# ============================================================
 class TableBuilder:
+    """Xây dựng khung bảng neon chính xác và đồng bộ màu.
+
+    Nguyên tắc đồng bộ màu:
+    - Viền ngang: gradient trái → phải.
+    - Viền dọc TRÁI = màu ĐẦU gradient (khớp góc trái).
+    - Viền dọc PHẢI = màu CUỐI gradient (khớp góc phải).
+    → 4 góc khép kín cùng màu, không bị chỏi.
+    """
+
     DOUBLE = {
         "tl": "╔", "tr": "╗", "bl": "╚", "br": "╝",
         "h": "═", "v": "║", "lt": "╠", "rt": "╣",
@@ -145,12 +166,22 @@ class TableBuilder:
         style: str = "double",
         gradient: list = None,
     ) -> None:
+        """Khởi tạo TableBuilder.
+
+        Tham số:
+            width: Độ rộng tổng (None = tự động theo terminal).
+            border_color: Màu viền khi không có gradient.
+            text_color: Màu chữ mặc định.
+            style: "double" hoặc "single".
+            gradient: Dải màu (danh sách tuple RGB) cho toàn khung.
+        """
         self.width = width if width else self.auto_width()
         self.border_color = border_color or TerminalColor.NEON_CYAN
         self.text_color = text_color or TerminalColor.NEUTRAL_WHITE
         self.chars = self.DOUBLE if style == "double" else self.SINGLE
         self.gradient = gradient
 
+        # === Đồng bộ màu viền dọc với 2 đầu gradient ngang ===
         if gradient:
             self._left_color = TerminalColor.rgb(*gradient[0])
             self._right_color = TerminalColor.rgb(*gradient[-1])
@@ -158,7 +189,9 @@ class TableBuilder:
             self._left_color = self.border_color
             self._right_color = self.border_color
 
+        # inner_width: số ký tự giữa 2 viền dọc
         self.inner_width = self.width - 2
+        # content_width: vùng nội dung thực (trừ 2 space đệm)
         self.content_width = self.inner_width - 2
 
     def _c(self, color: str, char: str) -> str:
@@ -291,7 +324,13 @@ class TableBuilder:
         lines.append(self.bottom_border(g))
         return "\n".join(lines)
 
+
+# ============================================================
+# CLI BANNER
+# ============================================================
 class CLIBanner:
+    """Banner cyberpunk: logo ASCII gradient + 2 khung bảng neon."""
+
     LOGO_ART = [
         " ██   ██ ████████ ████████ ██████  ███    ███  █████  ███████ ",
         " ██   ██    ██       ██    ██   ██ ████  ████ ██   ██ ██      ",
@@ -299,7 +338,7 @@ class CLIBanner:
         " ██   ██    ██       ██    ██      ██  ██  ██ ██   ██      ██ ",
         " ██   ██    ██       ██    ██      ██      ██ ██   ██ ███████ ",
         " ",
-        "                                 ©Copyright by Nguyễn Tấn Dũng",
+        "                                ©Copyright by Nguyễn Tấn Dũng",
     ]
 
     LOGO_LINE_GRADIENTS = [
@@ -330,6 +369,7 @@ class CLIBanner:
 
     @classmethod
     def _render_tagline_table(cls) -> str:
+        """Khung bảng 5 tính năng cốt lõi."""
         tb = TableBuilder(
             border_color=TerminalColor.NEON_MAGENTA,
             gradient=cls.BORDER_GRADIENT,
@@ -361,6 +401,7 @@ class CLIBanner:
 
     @classmethod
     def _render_info_table(cls) -> str:
+        """Khung bảng thông tin hệ thống."""
         tb = TableBuilder(
             border_color=TerminalColor.ELECTRIC_BLUE,
             gradient=cls.BORDER_GRADIENT,
@@ -386,6 +427,7 @@ class CLIBanner:
 
     @classmethod
     def render(cls, animate: bool = True) -> None:
+        """Kết xuất banner đầy đủ."""
         blocks = [
             "",
             cls._render_logo(),
@@ -403,6 +445,7 @@ class CLIBanner:
 
     @classmethod
     def _animate_output(cls, blocks: list) -> None:
+        """Hiển thị banner với hiệu ứng fade-in + spinner."""
         for i, block in enumerate(blocks):
             sys.stdout.write(block + "\n")
             sys.stdout.flush()
@@ -429,10 +472,16 @@ class CLIBanner:
         )
         sys.stdout.flush()
 
+
+# ============================================================
+# CLI APP
+# ============================================================
 class CLIApp:
+    """Ứng dụng dòng lệnh chính của httpmas."""
 
     @staticmethod
     def clear_screen() -> None:
+        """Xóa màn hình theo hệ điều hành."""
         if platform.system().lower() == "windows":
             os.system("cls")
         else:
@@ -440,11 +489,15 @@ class CLIApp:
 
     @staticmethod
     def run_version() -> None:
+        """Xử lý httpmas --version."""
         CLIApp.clear_screen()
         CLIBanner.render(animate=True)
 
     @staticmethod
     def run_help() -> None:
+        """Trợ giúp trong 4 khung bảng neon đồng bộ màu."""
+
+        # --- Khung 1: lệnh CLI (vàng → cam) ---
         tb1 = TableBuilder(
             border_color=TerminalColor.NEON_YELLOW,
             gradient=[(255, 255, 0), (255, 102, 0)],
@@ -468,6 +521,7 @@ class CLIApp:
             title_color=TerminalColor.NEON_YELLOW,
         )
 
+        # --- Khung 2: sync (cyan → tím) ---
         tb2 = TableBuilder(
             border_color=TerminalColor.NEON_CYAN,
             gradient=[(0, 255, 255), (138, 43, 226)],
@@ -496,6 +550,7 @@ class CLIApp:
             title_color=TerminalColor.NEON_CYAN,
         )
 
+        # --- Khung 3: async (hồng → cam) ---
         tb3 = TableBuilder(
             border_color=TerminalColor.NEON_PINK,
             gradient=[(255, 20, 147), (255, 102, 0)],
@@ -520,6 +575,7 @@ class CLIApp:
             title_color=TerminalColor.NEON_PINK,
         )
 
+        # --- Khung 4: lỗi (đỏ → cam) ---
         tb4 = TableBuilder(
             border_color=TerminalColor.NEON_RED,
             gradient=[(255, 0, 60), (255, 102, 0)],
@@ -559,8 +615,10 @@ class CLIApp:
 
     @staticmethod
     def run_info() -> None:
+        """Thông tin hệ thống trong 4 khung bảng neon đồng bộ."""
         import ssl
-        
+
+        # --- Khung 1: thư viện (cyan → tím) ---
         tb1 = TableBuilder(
             border_color=TerminalColor.NEON_CYAN,
             gradient=[(0, 255, 255), (138, 43, 226)],
@@ -582,6 +640,7 @@ class CLIApp:
             title_color=TerminalColor.NEON_CYAN,
         )
 
+        # --- Khung 2: python (tím → magenta) ---
         tb2 = TableBuilder(
             border_color=TerminalColor.ELECTRIC_PURPLE,
             gradient=[(138, 43, 226), (255, 0, 255)],
@@ -604,6 +663,7 @@ class CLIApp:
             title_color=TerminalColor.ELECTRIC_PURPLE,
         )
 
+        # --- Khung 3: hệ điều hành (hồng → cam) ---
         tb3 = TableBuilder(
             border_color=TerminalColor.NEON_PINK,
             gradient=[(255, 20, 147), (255, 102, 0)],
@@ -626,6 +686,7 @@ class CLIApp:
             title_color=TerminalColor.NEON_PINK,
         )
 
+        # --- Khung 4: bảo mật (xanh lá → cyan) ---
         tb4 = TableBuilder(
             border_color=TerminalColor.NEON_GREEN,
             gradient=[(57, 255, 20), (0, 255, 255)],
@@ -705,4 +766,5 @@ class CLIApp:
 
 
 def cli_entry() -> None:
+    """Điểm vào cho entry point trong setup.py."""
     CLIApp.main()
