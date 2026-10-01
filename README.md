@@ -94,11 +94,11 @@
 - Các bạn cũng có thể test và báo cáo tốc độ về cho chúng tôi biết để chúng tôi nâng cấp hơn
 
 ## Lưu ý
-  - Bản phát hành 2.9.18 này là bản cũ không lên cài thủ công nếu không dùng mục đích nâng cấp phát triển cùng admin
-  - Vẫn lên cài bằng ``pip install httpmas`` để sử dụng bản mới nhất
-  - Môi trường mạng yếu cũng phải có mức độ nếu yếu quá chúng tôi cũng không thể hỗ trợ
-  - Chúng tôi cần thời gian phát triển lên hiện tại chỉ có hỗ trợ http1.1
-  - Chúng tôi cũng đang tập trung cho tốc độ và ổn định
+- Bản v2.9.18 hết giá trị nâng cấp đổi sang ở bản v3.5.9 có nhánh riêng
+- Vẫn lên cài bằng ``pip install httpmas`` để sử dụng bản mới nhất
+- Môi trường mạng yếu cũng phải có mức độ nếu yếu quá chúng tôi cũng không thể hỗ trợ
+- Chúng tôi cần thời gian phát triển lên hiện tại chỉ có hỗ trợ http1.1
+- Chúng tôi cũng đang tập trung cho tốc độ và ổn định
 
 ----
 
@@ -109,8 +109,13 @@
 - Hiện tại thời điểm này tôi đã cập nhật lên h2 ở bản nội bộ và đang trong quá trình test cũng như triển khai thử nhiệm đánh giá thử nhiệm, tôi cũng tạo thêm thư viện mang tên httpssr nấu lại trên nền ssl sẵn có, dự án này tôi sẽ làm h2 tự làm thay vì dùng lại thư viện, mọi thông tin ở dự án [httpssr](https://github.com/dmasntd/httpssr). Như tên gọi nó chỉ xếp hạng SR tức nó xịn hơn nhưng chậm hơn do nó chưa phải tầng thấp nhất như httpmas.
 - Hiện tại httpssr chưa được phát hành, nó đang trong quá trình xây dựng đầu tiên, do tôi muốn tập trung hơn cho httpmas để sớm đẩy xong tiến trình lên httpssr đang nằm trên giấy nháp thôi, đây là thông báo và tôi muốn tạo ra h2 xử lý riêng và đòi hỏi xử nhanh chóng và xử lý tốt hơn, có khả năng vay mượn ý tưởng cốt lõi không thể thiếu. Thank you đã quan tâm.
 
-
 ----
+
+# New
+- Tôi đã đẩy lên 1 nhánh v3.5.9 đây là nhánh phiên bản cũ nó tôi đẩy lên để 1 số Dev có thể giúp tôi, nhánh này sẽ không khai mã nguồn ```.c```, file chứa xử lý, và phân chia lại 1 nhánh v2.9.18 để tránh trong tương lai nhánh main được cập nhật gì đó ở nhánh main, lưu í bản v2.9.18 các bạn có thể lấy về tham khảo và nó không còn giá trị đóng góp do quá cũ, còn v3.5.9 sẽ là bản thay thế để các Dev hỗ trợ phát triển
+- Tôi sẽ đẩy lên đây 1 số bản cũ hơn nữa nhưng chỉ để giữ mã nguồn tránh làm mất, không phục vụ mục đích gì cả, nếu hỗ trợ hãy tìm vào nhanh 3.5.9.
+
+---- 
 
 # Dự kiến tương lai
 - Cập nhật thêm proxy
