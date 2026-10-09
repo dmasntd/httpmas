@@ -1,4 +1,6 @@
-"""Hệ thống xử lý lỗi của httpmas."""
+"""
+Xử lý lỗi và bắn lỗi khi khi requests fail
+"""
 
 import sys
 import threading
@@ -6,7 +8,6 @@ import threading
 
 class _ColorPrinter:
     """In thông báo lỗi với mã màu RGB TrueColor ra stderr."""
-
     WHITE = "\033[38;2;255;255;255m"
     BLUE = "\033[38;2;120;180;255m"
     RED = "\033[38;2;255;50;50m"
@@ -29,12 +30,6 @@ class _ColorPrinter:
 
 
 class RequestsError(Exception):
-    """Ngoại lệ tùy chỉnh cho httpmas.
-
-    Có thể tắt in lỗi ngay bằng print_error=False để dùng
-    trong các vòng retry mạng yếu, tránh spam log.
-    """
-
     __slots__ = ("message", "print_error")
 
     def __init__(self, message: str, print_error: bool = True) -> None:
