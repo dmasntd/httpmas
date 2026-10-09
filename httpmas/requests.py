@@ -1,6 +1,5 @@
 """
 RequestManager sync - Optimistic Stale Retry + Adaptive Backoff.
-Nâng cấp: raise_on_error=True mặc định, tự ném HTTPError khi server trả 4xx/5xx.
 """
 import gzip
 import json as _json
@@ -208,8 +207,6 @@ class RequestManager:
             max_retries=max_retries,
         )
 
-    # ==================== RAISE HELPER ====================
-
     @staticmethod
     def _maybe_raise(response: Response, raise_on_error: bool) -> Response:
         """Tự động ném HTTPError khi server trả status >= 400."""
@@ -221,8 +218,6 @@ class RequestManager:
                 print_error=True,
             )
         return response
-
-    # ==================== PUBLIC API ====================
 
     def get(self, url, headers=None, params=None, timeout=None,
             raise_on_error=True, allow_redirects=True) -> Response:
@@ -268,8 +263,6 @@ class RequestManager:
         return self._request("OPTIONS", url, headers=headers,
                              timeout=timeout, raise_on_error=raise_on_error,
                              allow_redirects=allow_redirects)
-
-    # ==================== HELPERS ====================
 
     def _discard_sock(self, sock) -> None:
         if sock is None:
@@ -360,8 +353,6 @@ class RequestManager:
             base = max(0.01, min(est * 0.5, 0.2))
         delay = base * (2 ** attempt)
         return min(delay, 1.0)
-
-    # ==================== REQUEST LOGIC ====================
 
     def _request(
         self, method: str, url: str,
@@ -457,7 +448,6 @@ class RequestManager:
                     print_error=False,
                 )
 
-            # Redirect check
             if not redirect_handler.should_redirect(resp.status_code):
                 resp._history = response_history
                 return self._maybe_raise(resp, raise_on_error)
@@ -594,11 +584,6 @@ class RequestManager:
             self._engine.close_all()
         except Exception:
             pass
-
-
-# ============================================================
-# API MỨC MODULE
-# ============================================================
 
 _default_manager = RequestManager()
 _default_async_manager = None

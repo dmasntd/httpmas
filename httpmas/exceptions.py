@@ -1,16 +1,8 @@
-"""
-Hệ thống xử lý lỗi của httpmas.
-Cung cấp RequestsError với hiển thị màu RGB trên terminal.
-Hỗ trợ print_error=False cho retry silent.
-Nâng cấp: thêm HTTPError cho server errors (4xx/5xx).
-"""
 import sys
 import threading
 
 
 class _ColorPrinter:
-    """In thông báo lỗi với mã màu RGB TrueColor ra stderr."""
-
     WHITE = "\033[38;2;255;255;255m"
     BLUE = "\033[38;2;120;180;255m"
     RED = "\033[38;2;255;50;50m"
@@ -21,7 +13,6 @@ class _ColorPrinter:
 
     @classmethod
     def print_error(cls, message: str) -> None:
-        """In lỗi ra stderr ngay lập tức, an toàn với đa luồng."""
         formatted = (
             f"{cls.WHITE}[{cls.BLUE}Dmas{cls.WHITE}] "
             f"{cls.RED}RequestsError{cls.WHITE}: "
@@ -72,10 +63,6 @@ class RequestsError(Exception):
 class HTTPError(RequestsError):
     """Lỗi HTTP do server trả về (status >= 400).
 
-    Thuộc tính bổ sung:
-        status_code: Mã trạng thái HTTP (404, 500, ...)
-        response: Đối tượng Response đầy đủ để user xử lý tiếp.
-
     Cách dùng:
         from httpmas import requests, HTTPError
 
@@ -100,8 +87,7 @@ class HTTPError(RequestsError):
         self.response = response
         if print_error and status_code > 0:
             _ColorPrinter.print_http_error(message, status_code)
-            # Không gọi super().__init__ với print_error=True
-            # để tránh in 2 lần
+            # Gọi Exception.__init__ để tránh in lỗi 2 lần
             Exception.__init__(self, message)
             self.message = str(message)
             self.print_error = False

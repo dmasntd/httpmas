@@ -55,9 +55,7 @@ class NetworkStats:
             return cap
         return max(5.0, min(cap, est * 6.0 + 1.0))
 
-
 NETWORK_STATS = NetworkStats()
-
 
 class SocketEngine:
     __slots__ = (
@@ -79,8 +77,6 @@ class SocketEngine:
         self._sorted_cache: Dict[str, List] = {}
         self._sorted_lock = threading.Lock()
 
-    # ---------- DNS ----------
-
     def _get_sorted_infos(self, host: str) -> List:
         with self._sorted_lock:
             cached = self._sorted_cache.get(host)
@@ -94,8 +90,6 @@ class SocketEngine:
             self._sorted_cache[host] = sorted_infos
         return sorted_infos
 
-    # ---------- socket tuning ----------
-
     @classmethod
     def _tune_socket(cls, sock: socket.socket) -> None:
         try:
@@ -106,9 +100,6 @@ class SocketEngine:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         except OSError:
             pass
-        # Không hardcode SO_RCVBUF/SNDBUF. Để OS auto-tune.
-
-    # ---------- Happy Eyeballs (RFC 8305) ----------
 
     def _happy_connect(self, infos: List, port: int, deadline: float) -> socket.socket:
         """
@@ -123,7 +114,6 @@ class SocketEngine:
         n = len(infos)
 
         while True:
-            # --- Khởi tạo connection tiếp theo nếu còn IP ---
             if idx < n:
                 family, socktype, proto, _, sockaddr = infos[idx]
                 idx += 1
@@ -135,13 +125,11 @@ class SocketEngine:
                     addr = self._address_for(sockaddr, port)
                     try:
                         sock.connect(addr)
-                        # Connect xong ngay (localhost / very fast)
                         sock.setblocking(True)
                         for s, _ in pending:
                             self._close_socket(s)
                         return sock
                     except BlockingIOError:
-                        # Non-blocking connect đang chạy
                         pending.append((sock, addr))
                     except OSError as exc:
                         last_error = exc
@@ -153,23 +141,18 @@ class SocketEngine:
                         self._close_socket(sock)
                     continue
 
-            # --- Không còn socket nào đang chờ → thất bại ---
             if not pending:
                 break
 
-            # --- Tính thời gian chờ ---
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 break
 
             if idx < n:
-                # Còn IP để thử → chờ stagger delay
                 wait_time = min(stagger, remaining)
             else:
-                # Hết IP → chờ đến deadline
                 wait_time = remaining
 
-            # --- select: socket nào writable trước → kiểm tra kết quả ---
             socks = [s for s, _ in pending]
             try:
                 _, writable, _ = select.select([], socks, [], wait_time)
@@ -183,14 +166,12 @@ class SocketEngine:
                     err = -1
 
                 if err == 0:
-                    # Thành công — đóng tất cả socket thua
                     s.setblocking(True)
                     for other, _ in pending:
                         if other is not s:
                             self._close_socket(other)
                     return s
                 else:
-                    # Thất bại — loại khỏi pending
                     err_name = errno.errorcode.get(err, str(err))
                     last_error = OSError(err, f"connect failed: {err_name}")
                     pending = [(ps, pa) for ps, pa in pending if ps is not s]
@@ -199,15 +180,12 @@ class SocketEngine:
             if time.monotonic() >= deadline:
                 break
 
-        # --- Dọn dẹp ---
         for s, _ in pending:
             self._close_socket(s)
 
         if last_error is not None:
             raise last_error
         raise OSError("Không thể kết nối tới bất kỳ địa chỉ nào")
-
-    # ---------- Adaptive Backoff ----------
 
     @staticmethod
     def _adaptive_backoff(attempt: int, host: str) -> float:
@@ -229,8 +207,6 @@ class SocketEngine:
 
         delay = base * (2 ** attempt)
         return min(delay, 1.0)
-
-    # ---------- liveness probe ----------
 
     @staticmethod
     def _probe_alive(sock: socket.socket) -> bool:
@@ -271,8 +247,6 @@ class SocketEngine:
         except Exception:
             return False
 
-    # ---------- connect ----------
-
     def connect(
         self,
         host: str,
@@ -283,7 +257,6 @@ class SocketEngine:
         effective_timeout = timeout if timeout is not None else self._timeout
         key = (host, port, use_tls)
 
-        # 1. Thử pool trước
         pooled = self._get_from_pool(key)
         if pooled is not None:
             try:
@@ -292,7 +265,6 @@ class SocketEngine:
             except OSError:
                 self._close_socket(pooled)
 
-        # 2. Fresh connect với Happy Eyeballs
         deadline = time.monotonic() + effective_timeout
         attempts = self._max_retries + 1
         last_error: Optional[Exception] = None
@@ -356,8 +328,6 @@ class SocketEngine:
             f"Không thể kết nối tới {host}:{port} sau {attempts} lần thử: {last_error}",
             print_error=False,
         )
-
-    # ---------- pool ----------
 
     def _get_from_pool(self, key) -> Optional[socket.socket]:
         with self._lock:

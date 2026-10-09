@@ -1,12 +1,3 @@
-"""
-DNS cache nội bộ cho httpmas.
-
-Nâng cấp chống fail:
-- Retry resolve khi fail.
-- Single-flight async.
-- IPv4 priority.
-"""
-
 import asyncio
 import socket
 import threading

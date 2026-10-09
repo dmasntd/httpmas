@@ -380,7 +380,6 @@ class AsyncHTTPParser:
         return status_code, reason, headers, body, should_close
 
     async def _read_body(self, headers):
-        """headers giờ là CaseInsensitiveHeaders — .get() hoạt động đúng."""
         transfer_encoding = headers.get("transfer-encoding", "").lower()
         if "chunked" in transfer_encoding:
             return await self._read_chunked()
@@ -463,8 +462,6 @@ class AsyncRequestManager:
         self._engine = AsyncSocketEngine(default_timeout=timeout)
         self._error_dispatcher = ErrorDispatcher()
 
-    # ==================== RAISE HELPER ====================
-
     @staticmethod
     def _maybe_raise(response: Response, raise_on_error: bool) -> Response:
         """Tự động ném HTTPError khi server trả status >= 400."""
@@ -476,8 +473,6 @@ class AsyncRequestManager:
                 print_error=True,
             )
         return response
-
-    # ==================== PUBLIC API ====================
 
     async def async_get(self, url, headers=None, params=None, timeout=None, raise_on_error=True):
         return await self._request("GET", url, headers=headers, params=params, timeout=timeout, raise_on_error=raise_on_error)
@@ -516,8 +511,6 @@ class AsyncRequestManager:
         results = await asyncio.gather(*tasks, return_exceptions=False)
         self._error_dispatcher.stop()
         return list(results)
-
-    # ==================== HELPERS ====================
 
     @classmethod
     def _header_prefix(cls, key):
@@ -568,8 +561,6 @@ class AsyncRequestManager:
             return RequestsError(message, print_error=False)
         except TypeError:
             return RequestsError(message)
-
-    # ==================== REQUEST LOGIC ====================
 
     async def _request_impl(self, method, url, headers=None, data=None, json=None, params=None, timeout=None, raise_on_error=True):
         method_upper = method.upper()

@@ -1,8 +1,6 @@
 """
 Session cho httpmas.
 Tích hợp: Cookie + Auth + Redirect + Headers.
-Nâng cấp: raise_on_error=True mặc định, tự ném HTTPError khi server trả 4xx/5xx.
-Cả sync và async.
 """
 import time
 from typing import Any, Dict, Optional
@@ -66,14 +64,12 @@ class Session:
         self._max_retries = max_retries
         self._closed = False
 
-    # ---- Context manager ----
     def __enter__(self) -> "Session":
         return self
 
     def __exit__(self, *args) -> None:
         self.close()
 
-    # ---- Properties ----
     @property
     def cookies(self) -> CookieJar:
         return self._cookie_jar
@@ -94,7 +90,6 @@ class Session:
     def headers(self) -> CaseInsensitiveHeaders:
         return self._default_headers
 
-    # ---- Raise helper ----
     @staticmethod
     def _maybe_raise(response: Response, raise_on_error: bool) -> Response:
         """Tự động ném HTTPError khi server trả status >= 400."""
@@ -107,7 +102,6 @@ class Session:
             )
         return response
 
-    # ---- Public API ----
     def request(
         self,
         method: str,
@@ -201,7 +195,6 @@ class Session:
     def options(self, url: str, **kwargs) -> Response:
         return self.request("OPTIONS", url, **kwargs)
 
-    # ---- Internal ----
     def _prepare_headers(
         self,
         url: str,
