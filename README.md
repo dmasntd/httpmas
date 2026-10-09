@@ -1,6 +1,6 @@
 # Tác giả : Nguyễn Tấn Dũng & MinhAnhs
  ## ``Form VietNamese``
- ### HTTPS CLIENt - HTTPMAS
+ ### HTTPS CLIENT - HTTPMAS
 
 [![PyPI version](https://img.shields.io/pypi/v/httpmas.svg)](https://pypi.org/project/httpmas/)
 [![Python Version](https://img.shields.io/pypi/pyversions/httpmas.svg)](https://pypi.org/project/httpmas/)
@@ -113,7 +113,9 @@
 
 # New
 - Hiện tại tôi đang phát triển lên h2 và đang tích hợp cũng như thêm proxy. Tôi cần thời gian để tích hợp h2 và viết thêm một số xử lý riêng.
-- Có khả năng phần lõi tôi sẽ phát triển và đẩy mạnh hiệu năng hơn, khả năng này là cao vì nhận thấy tốc độ chưa đạt yêu cầu
+- Có khả năng phần lõi tôi sẽ phát triển và đẩy mạnh hiệu năng hơn, khả năng này là cao vì nhận thấy tốc độ chưa đạt yêu cầu.
+- Đã thêm nhánh mới v3.6.5 nhánh này lưu giữ lại code tránh làm mất code và tránh xóa mất, vẫn đéo có file .c xử lý đâu nhé, tao còn đang tìm cách mã hóa nó chứ còn lâu đem lên đây
+- Vẫn xem code c bằng cách dump thư viện ra đọc nhé nhưng không liên quan vì sắp cập nhật mới
 
 ---- 
 
