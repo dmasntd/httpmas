@@ -27,7 +27,7 @@ class Response:
     __slots__ = (
         "status_code", "reason", "headers", "content",
         "url", "elapsed", "encoding",
-        "_history", "_cookies",
+        "_history", "_cookies", "_text"
     )
 
     def __init__(

@@ -15,6 +15,7 @@ from .exceptions import RequestsError, HTTPError
 from .socket_engine import SocketEngine, NETWORK_STATS
 from .http_parser import HTTPParser
 from .response import Response
+from .redirect import RedirectHandler
 
 try:
     import brotli
@@ -223,46 +224,50 @@ class RequestManager:
 
     # ==================== PUBLIC API ====================
 
-    def request(self, method: str, url: str, **kwargs) -> Response:
-        return self._request(method.upper(), url, **kwargs)
-
     def get(self, url, headers=None, params=None, timeout=None,
-            raise_on_error=True) -> Response:
+            raise_on_error=True, allow_redirects=True) -> Response:
         return self._request("GET", url, headers=headers, params=params,
-                             timeout=timeout, raise_on_error=raise_on_error)
+                             timeout=timeout, raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     def post(self, url, headers=None, data=None, json=None, params=None,
-             timeout=None, raise_on_error=True) -> Response:
+             timeout=None, raise_on_error=True, allow_redirects=True) -> Response:
         return self._request("POST", url, headers=headers, data=data,
                              json=json, params=params, timeout=timeout,
-                             raise_on_error=raise_on_error)
+                             raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     def put(self, url, headers=None, data=None, json=None,
-            timeout=None, raise_on_error=True) -> Response:
+            timeout=None, raise_on_error=True, allow_redirects=True) -> Response:
         return self._request("PUT", url, headers=headers, data=data,
                              json=json, timeout=timeout,
-                             raise_on_error=raise_on_error)
+                             raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     def delete(self, url, headers=None, timeout=None,
-               raise_on_error=True) -> Response:
+               raise_on_error=True, allow_redirects=True) -> Response:
         return self._request("DELETE", url, headers=headers,
-                             timeout=timeout, raise_on_error=raise_on_error)
+                             timeout=timeout, raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     def patch(self, url, headers=None, data=None, json=None,
-              timeout=None, raise_on_error=True) -> Response:
+              timeout=None, raise_on_error=True, allow_redirects=True) -> Response:
         return self._request("PATCH", url, headers=headers, data=data,
                              json=json, timeout=timeout,
-                             raise_on_error=raise_on_error)
+                             raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     def head(self, url, headers=None, timeout=None,
-             raise_on_error=True) -> Response:
+             raise_on_error=True, allow_redirects=False) -> Response:
         return self._request("HEAD", url, headers=headers,
-                             timeout=timeout, raise_on_error=raise_on_error)
+                             timeout=timeout, raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     def options(self, url, headers=None, timeout=None,
-                raise_on_error=True) -> Response:
+                raise_on_error=True, allow_redirects=True) -> Response:
         return self._request("OPTIONS", url, headers=headers,
-                             timeout=timeout, raise_on_error=raise_on_error)
+                             timeout=timeout, raise_on_error=raise_on_error,
+                             allow_redirects=allow_redirects)
 
     # ==================== HELPERS ====================
 
@@ -361,82 +366,114 @@ class RequestManager:
     def _request(
         self, method: str, url: str,
         headers=None, data=None, json=None, params=None,
-        timeout=None, raise_on_error=True,
+        timeout=None, raise_on_error=True, allow_redirects=True,
     ) -> Response:
         method_upper = method.upper()
         parsed = _URLParser.parse(url)
         effective_timeout = float(
             timeout if timeout is not None else self._timeout
         )
-        attempts = (
-            self.MAX_REQUEST_RETRIES + 1
-            if method_upper in self.SAFE_RETRY_METHODS
-            else 1
+
+        # Redirect setup
+        redirect_handler = RedirectHandler(
+            max_redirects=30,
+            allow_redirects=allow_redirects,
         )
-        deadline = time.monotonic() + effective_timeout
-        last_exc: Optional[Exception] = None
-        attempt = 0
-        stale_retried = False
+        current_url = url
+        current_method = method_upper
+        current_data = data
+        current_json = json
+        response_history = []
 
-        while attempt < attempts:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0.2:
-                break
-            try:
-                resp = self._single_request(
-                    method_upper, url,
-                    headers=headers, data=data, json=json,
-                    params=params, timeout=remaining,
-                )
-            except _StaleConnectionError:
-                if stale_retried:
-                    raise RequestsError(
-                        f"Connection stale tới {url} sau 2 lần thử",
-                        print_error=False,
-                    )
-                stale_retried = True
-                continue
-            except Exception as exc:
-                last_exc = exc
-                if not self._is_transient_error(exc):
-                    raise
-                attempt += 1
-                if attempt >= attempts:
-                    raise
-                delay = self._adaptive_backoff(attempt - 1, parsed.hostname)
-                delay = min(delay, self.RETRY_MAX_DELAY)
-                sleep_time = min(delay, max(0.0, deadline - time.monotonic()))
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-                continue
+        while True:
+            attempts = (
+                self.MAX_REQUEST_RETRIES + 1
+                if current_method in self.SAFE_RETRY_METHODS
+                else 1
+            )
+            deadline = time.monotonic() + effective_timeout
+            last_exc: Optional[Exception] = None
+            attempt = 0
+            stale_retried = False
+            resp = None
 
-            if (
-                resp.status_code in self.RETRYABLE_STATUS
-                and method_upper in self.SAFE_RETRY_METHODS
-                and attempt + 1 < attempts
-            ):
-                retry_after = resp.headers.get("retry-after", "")
-                delay = 0.3 * (attempt + 1)
+            while attempt < attempts:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0.2:
+                    break
                 try:
-                    if retry_after:
-                        delay = max(delay, float(retry_after))
-                except ValueError:
-                    pass
-                delay = min(delay, self.RETRY_MAX_DELAY)
-                sleep_time = min(delay, max(0.0, deadline - time.monotonic()))
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-                attempt += 1
-                continue
+                    resp = self._single_request(
+                        current_method, current_url,
+                        headers=headers, data=current_data, json=current_json,
+                        params=params, timeout=remaining,
+                    )
+                except _StaleConnectionError:
+                    if stale_retried:
+                        raise RequestsError(
+                            f"Connection stale tới {current_url} sau 2 lần thử",
+                            print_error=False,
+                        )
+                    stale_retried = True
+                    continue
+                except Exception as exc:
+                    last_exc = exc
+                    if not self._is_transient_error(exc):
+                        raise
+                    attempt += 1
+                    if attempt >= attempts:
+                        raise
+                    delay = self._adaptive_backoff(attempt - 1, parsed.hostname)
+                    delay = min(delay, self.RETRY_MAX_DELAY)
+                    sleep_time = min(delay, max(0.0, deadline - time.monotonic()))
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                    continue
 
-            return self._maybe_raise(resp, raise_on_error)
+                if (
+                    resp.status_code in self.RETRYABLE_STATUS
+                    and current_method in self.SAFE_RETRY_METHODS
+                    and attempt + 1 < attempts
+                ):
+                    retry_after = resp.headers.get("retry-after", "")
+                    delay = 0.3 * (attempt + 1)
+                    try:
+                        if retry_after:
+                            delay = max(delay, float(retry_after))
+                    except ValueError:
+                        pass
+                    delay = min(delay, self.RETRY_MAX_DELAY)
+                    sleep_time = min(delay, max(0.0, deadline - time.monotonic()))
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
+                    attempt += 1
+                    continue
+                break
 
-        if last_exc is not None:
-            raise last_exc
-        raise RequestsError(
-            f"Request tới {url} thất bại sau {attempts} lần thử",
-            print_error=False,
-        )
+            if resp is None:
+                if last_exc is not None:
+                    raise last_exc
+                raise RequestsError(
+                    f"Request tới {current_url} thất bại sau {attempts} lần thử",
+                    print_error=False,
+                )
+
+            # Redirect check
+            if not redirect_handler.should_redirect(resp.status_code):
+                resp._history = response_history
+                return self._maybe_raise(resp, raise_on_error)
+
+            redirect_handler.check_loop(current_url)
+            redirect_handler.check_limit()
+            redirect_handler.record(current_url)
+            new_url, new_method, strip_body = redirect_handler.resolve(
+                resp, current_method, current_url
+            )
+            response_history.append(resp)
+            if strip_body:
+                current_data = None
+                current_json = None
+            current_url = new_url
+            current_method = new_method
 
     def _single_request(
         self, method: str, url: str,

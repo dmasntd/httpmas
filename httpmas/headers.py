@@ -83,6 +83,14 @@ class CaseInsensitiveHeaders:
             if entries:
                 yield entries[-1]
 
+    def items_all(self) -> Iterator[Tuple[str, str]]:
+        """Yield TẤT CẢ entries, kể cả duplicate (cho outgoing request building)."""
+        for lower_key in self._order:
+            entries = self._store.get(lower_key)
+            if entries:
+                for k, v in entries:
+                    yield k, v
+
     def keys(self) -> Iterator[str]:
         for lower_key in self._order:
             entries = self._store.get(lower_key)

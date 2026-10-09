@@ -2,6 +2,7 @@
 Cookie management cho httpmas.
 RFC 6265 compliant (simplified).
 Thread-safe, hỗ trợ domain/path matching, expiry.
+FIX: matches_domain cho mọi website, thêm hàm update() linh hoạt.
 """
 import threading
 import time
@@ -47,7 +48,7 @@ class Cookie:
     def matches_domain(self, request_host: str) -> bool:
         request_host = request_host.lower()
         if not self.domain:
-            return request_host == self.domain
+            return True  
         if request_host == self.domain:
             return True
         return request_host.endswith("." + self.domain)
@@ -68,7 +69,6 @@ class Cookie:
         host = parsed.hostname or ""
         path = parsed.path or "/"
         scheme = parsed.scheme.lower()
-
         if not self.matches_domain(host):
             return False
         if not self.matches_path(path):
@@ -111,7 +111,8 @@ class CookiePolicy:
 
 
 class CookieJar:
-    """Lưu trữ và quản lý cookies theo domain/path.
+    """
+    Lưu trữ và quản lý cookies theo domain/path.
     Thread-safe. Tự động xoá cookie hết hạn.
     """
     __slots__ = ("_cookies", "_lock", "_policy")
@@ -149,19 +150,32 @@ class CookieJar:
             self._cookies.append(cookie)
             self._purge_expired()
 
+    def update(self, cookie_dict: dict, url: str) -> None:
+        """
+        Hỗ trợ nạp Cookie dạng Dictionary cho MỌI website.
+        Tự động lấy domain từ url.
+        """
+        parsed = urlparse(url)
+        default_domain = (parsed.hostname or "").lower().lstrip(".")
+        
+        for name, value in cookie_dict.items():
+            self.set_cookie(Cookie(
+                name=name.strip(),
+                value=value.strip(),
+                domain=default_domain,
+                path="/"
+            ))
+
     def set_from_header(self, header_value: str, url: str) -> None:
         """Parse Set-Cookie header và lưu cookie."""
         parsed = urlparse(url)
         request_host = (parsed.hostname or "").lower()
         request_path = parsed.path or "/"
-
         cookie = self._parse_set_cookie(header_value, request_host, request_path)
         if cookie is None:
             return
-
         if not self._policy.should_accept(cookie, url):
             return
-
         self.set_cookie(cookie)
 
     def _parse_set_cookie(
@@ -170,18 +184,15 @@ class CookieJar:
         parts = header.split(";")
         if not parts:
             return None
-
         name_value = parts[0].strip()
         eq_idx = name_value.find("=")
         if eq_idx < 0:
             return None
-
         name = name_value[:eq_idx].strip()
         value = name_value[eq_idx + 1:].strip()
-
         if not name:
             return None
-
+        
         domain = default_domain
         path = default_path
         expires = None
@@ -189,11 +200,10 @@ class CookieJar:
         http_only = False
         same_site = ""
         max_age = None
-
+        
         for part in parts[1:]:
             part = part.strip()
             lower = part.lower()
-
             if lower.startswith("domain="):
                 domain = part[7:].strip().lstrip(".").lower()
             elif lower.startswith("path="):
@@ -211,13 +221,13 @@ class CookieJar:
                 http_only = True
             elif lower.startswith("samesite="):
                 same_site = part[9:].strip()
-
+                
         if max_age is not None:
             if max_age <= 0:
                 expires = 0.0
             else:
                 expires = time.time() + max_age
-
+                
         return Cookie(
             name=name,
             value=value,

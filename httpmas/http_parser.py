@@ -1,19 +1,20 @@
 """
 HTTP/1.1 parser sync — C-accelerated khi có _httpmas_fast.
+FIX: Xử lý SSLWantReadError, trả về CaseInsensitiveHeaders để giữ nguyên Set-Cookie.
 """
 import socket
 import ssl as _ssl
 import time
-from typing import Dict, Optional, Tuple
-
+import select
+from typing import Dict, Optional, Tuple, List
 from .exceptions import RequestsError
 from ._fast import find_header_end, parse_response_head, parse_chunk_size
+from .headers import CaseInsensitiveHeaders
 
 _MAX_HEAD = 131072
 _MAX_CHUNK = 67108864
 _MAX_BUFFER = 268435456
 _READ_BLOCK = 65536
-
 
 class HTTPParser:
     __slots__ = (
@@ -32,6 +33,7 @@ class HTTPParser:
         self._method = method.upper()
         self._start_time = start_time if start_time is not None else time.monotonic()
         self.header_elapsed = 0.0
+
         if buffer is not None and isinstance(buffer, bytearray) and len(buffer) >= _READ_BLOCK:
             self._buf = buffer
         else:
@@ -104,12 +106,18 @@ class HTTPParser:
         except socket.timeout:
             raise RequestsError("Hết thời gian chờ khi đọc dữ liệu từ máy chủ", print_error=False)
         except _ssl.SSLWantReadError:
-            return False
+            try:
+                timeout = self._sock.gettimeout() or 5.0
+                select.select([self._sock], [], [], timeout)
+                n = self._sock.recv_into(view)
+            except Exception:
+                return False
         except OSError as exc:
             raise RequestsError(f"Lỗi khi đọc dữ liệu: {exc}", print_error=False)
         finally:
             view.release()
             mv.release()
+            
         if n > 0:
             self._length += n
             return True
@@ -161,26 +169,28 @@ class HTTPParser:
         self._maybe_compact()
         return data
 
-    def parse(self) -> Tuple[int, str, Dict[str, str], bytes, bool]:
+    def parse(self) -> Tuple[int, str, CaseInsensitiveHeaders, bytes, bool]:
         head_bytes = self._read_head()
         self.header_elapsed = time.monotonic() - self._start_time
 
-        # C-accelerated hoặc Python fallback — cùng API
         try:
-            status_code, reason, http_version, headers = parse_response_head(head_bytes)
+            status_code, reason, http_version, headers_list = parse_response_head(head_bytes)
         except (ValueError, Exception) as exc:
             raise RequestsError(str(exc), print_error=False)
 
-        connection_header = headers.get("connection", "").lower()
-        transfer_encoding = headers.get("transfer-encoding", "").lower()
-        content_length = headers.get("content-length", "")
+        resp_headers = CaseInsensitiveHeaders()
+        for k, v in headers_list:
+            resp_headers.add(k, v)
+
+        connection_header = resp_headers.get("connection", "").lower()
+        transfer_encoding = resp_headers.get("transfer-encoding", "").lower()
+        content_length = resp_headers.get("content-length", "")
 
         no_body = (
             self._method == "HEAD"
             or status_code in (204, 304)
             or 100 <= status_code < 200
         )
-
         should_close = False
         if "close" in connection_header:
             should_close = True
@@ -189,10 +199,10 @@ class HTTPParser:
         elif not no_body and "chunked" not in transfer_encoding and not content_length:
             should_close = True
 
-        body = b"" if no_body else self._read_body(headers)
-        return status_code, reason, headers, body, should_close
+        body = b"" if no_body else self._read_body(resp_headers)
+        return status_code, reason, resp_headers, body, should_close
 
-    def _read_body(self, headers: Dict[str, str]) -> bytes:
+    def _read_body(self, headers: CaseInsensitiveHeaders) -> bytes:
         transfer_encoding = headers.get("transfer-encoding", "").lower()
         if "chunked" in transfer_encoding:
             return self._read_chunked_body()

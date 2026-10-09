@@ -1,6 +1,6 @@
 """
 Quản lý TLS/SSL cho httpmas.
-FIX CRITICAL: Loại bỏ hidden reconnect bypass timeout.
+FIX: Thêm ALPN, tối ưu Cipher Suite để giả lập Chrome (Bypass WAF).
 """
 import ssl
 import socket
@@ -20,20 +20,37 @@ class TLSManager:
     def _create_context(cls) -> ssl.SSLContext:
         context = ssl.create_default_context()
         context.minimum_version = ssl.TLSVersion.TLSv1_2
+        
         try:
-            context.set_ciphers("ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS")
-        except ssl.SSLError: pass
+            context.set_alpn_protocols(['http/1.1'])
+        except NotImplementedError:
+            pass
+            
+        try:
+            context.set_ciphers(
+                "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
+                "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:"
+                "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:"
+                "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:"
+                "ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA"
+            )
+        except ssl.SSLError: 
+            pass
+            
         context.check_hostname = True
         context.verify_mode = ssl.CERT_REQUIRED
+        
         try:
             mode = getattr(ssl, "SESS_CACHE_CLIENT", None)
             if mode is not None and hasattr(context, "set_session_cache_mode"):
                 context.set_session_cache_mode(mode)
         except Exception: pass
+        
         try:
             if hasattr(context, "options"):
                 context.options |= getattr(ssl, "OP_NO_RENEGOTIATION", 0)
         except Exception: pass
+        
         return context
 
     @classmethod
@@ -78,13 +95,12 @@ class TLSManager:
                 new_session = ssl_sock.session
                 if new_session is not None: cls._store_session(hostname, new_session)
             except (AttributeError, TypeError): pass
-            return ssl_sock
             
+            return ssl_sock
         except ssl.SSLCertVerificationError as exc:
             cls._safe_close(sock)
             raise RequestsError(f"Xác minh chứng chỉ thất bại cho {hostname}: {exc}", print_error=False)
         except ssl.SSLError as exc:
-            # FIX: XÓA hidden reconnect. Chỉ xóa cache và ném lỗi để Engine retry sạch sẽ.
             if cached_session is not None:
                 with cls._session_lock: cls._session_cache.pop(hostname, None)
             cls._safe_close(sock)

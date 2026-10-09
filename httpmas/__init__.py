@@ -47,7 +47,7 @@ from . import version as _version_module
 
 version = getattr(
     _version_module, "version", None
-) or getattr(_version_module, "__version__", "0.0.0")
+) or getattr(_version_module, "__version__", "3.6.5")
 
 requests.Session = Session
 requests.AsyncSession = AsyncSession
@@ -58,33 +58,24 @@ requests.DigestAuth = DigestAuth
 requests.APIKeyAuth = APIKeyAuth
 
 __all__ = [
-    # Core
     "requests",
     "RequestManager",
     "AsyncRequestManager",
     "Response",
-    # Errors
     "RequestsError",
     "HTTPError",
-    # Session
     "Session",
     "AsyncSession",
-    # Cookie
     "CookieJar",
     "Cookie",
     "CookiePolicy",
-    # Auth
     "AuthBase",
     "BasicAuth",
     "BearerAuth",
     "DigestAuth",
     "APIKeyAuth",
-    # Headers
     "CaseInsensitiveHeaders",
-    # Redirect
     "RedirectHandler",
-    # Async module
     "asyncio",
-    # Version
     "version",
 ]

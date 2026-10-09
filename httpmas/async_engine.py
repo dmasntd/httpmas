@@ -1,3 +1,7 @@
+"""
+AsyncEngine — C-accelerated header parsing.
+Nâng cấp: raise_on_error=True mặc định, tự ném HTTPError khi server trả 4xx/5xx.
+"""
 import asyncio
 import socket
 import ssl
@@ -324,7 +328,6 @@ class AsyncSocketEngine:
     async def close_all(self):
         await self._pool.close_all()
 
-
 class AsyncHTTPParser:
     """Phân tích HTTP response từ asyncio StreamReader — C-accelerated."""
     __slots__ = ("_reader", "_method")
@@ -342,19 +345,29 @@ class AsyncHTTPParser:
             raise _TransientError(f"Kết nối bị đóng khi đọc header: {exc}")
         except (ConnectionError, asyncio.TimeoutError, OSError) as exc:
             raise _TransientError(f"Lỗi kết nối khi đọc header: {exc}")
+
         head = head[:-4]
+
         try:
-            status_code, reason, http_version, headers = parse_response_head(head)
+            status_code, reason, http_version, headers_list = parse_response_head(head)
         except (ValueError, Exception) as exc:
             raise RequestsError(str(exc), print_error=False)
+
+        from .headers import CaseInsensitiveHeaders
+        headers = CaseInsensitiveHeaders()
+        for k, v in headers_list:
+            headers.add(k, v)
+
         connection_header = headers.get("connection", "").lower()
         transfer_encoding = headers.get("transfer-encoding", "").lower()
         content_length = headers.get("content-length", "")
+
         no_body = (
             self._method == "HEAD"
             or status_code in (204, 304)
             or 100 <= status_code < 200
         )
+
         should_close = False
         if connection_header == "close":
             should_close = True
@@ -362,13 +375,16 @@ class AsyncHTTPParser:
             should_close = True
         elif not no_body and "chunked" not in transfer_encoding and not content_length:
             should_close = True
+
         body = b"" if no_body else await self._read_body(headers)
         return status_code, reason, headers, body, should_close
 
     async def _read_body(self, headers):
+        """headers giờ là CaseInsensitiveHeaders — .get() hoạt động đúng."""
         transfer_encoding = headers.get("transfer-encoding", "").lower()
         if "chunked" in transfer_encoding:
             return await self._read_chunked()
+
         content_length = headers.get("content-length", "")
         if content_length:
             try:
@@ -383,6 +399,7 @@ class AsyncHTTPParser:
                 raise _TransientError(f"Kết nối bị đóng khi đọc body: {exc}")
             except (ConnectionError, asyncio.TimeoutError, OSError) as exc:
                 raise _TransientError(f"Lỗi kết nối khi đọc body: {exc}")
+
         try:
             return await self._reader.read(-1)
         except (ConnectionError, asyncio.TimeoutError, OSError) as exc:
@@ -446,6 +463,8 @@ class AsyncRequestManager:
         self._engine = AsyncSocketEngine(default_timeout=timeout)
         self._error_dispatcher = ErrorDispatcher()
 
+    # ==================== RAISE HELPER ====================
+
     @staticmethod
     def _maybe_raise(response: Response, raise_on_error: bool) -> Response:
         """Tự động ném HTTPError khi server trả status >= 400."""
@@ -457,6 +476,8 @@ class AsyncRequestManager:
                 print_error=True,
             )
         return response
+
+    # ==================== PUBLIC API ====================
 
     async def async_get(self, url, headers=None, params=None, timeout=None, raise_on_error=True):
         return await self._request("GET", url, headers=headers, params=params, timeout=timeout, raise_on_error=raise_on_error)
@@ -495,6 +516,8 @@ class AsyncRequestManager:
         results = await asyncio.gather(*tasks, return_exceptions=False)
         self._error_dispatcher.stop()
         return list(results)
+
+    # ==================== HELPERS ====================
 
     @classmethod
     def _header_prefix(cls, key):
@@ -546,6 +569,7 @@ class AsyncRequestManager:
         except TypeError:
             return RequestsError(message)
 
+    # ==================== REQUEST LOGIC ====================
 
     async def _request_impl(self, method, url, headers=None, data=None, json=None, params=None, timeout=None, raise_on_error=True):
         method_upper = method.upper()

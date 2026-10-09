@@ -1,5 +1,6 @@
 """
-Copyright by MinhAnhs aka manhscuti
+C-acceleration wrapper cho httpmas v3.
+FIX: Trả về list of tuples để không bị mất Set-Cookie.
 """
 try:
     from ._httpmas_fast import (
@@ -14,8 +15,7 @@ except (ImportError, OSError, Exception):
     C_ACCELERATION = False
 
     def find_header_end(buf, start, end):
-        if end < 0:
-            end = 0
+        if end < 0: end = 0
         return buf.find(b"\r\n\r\n", start, end)
 
     def parse_response_head(head_bytes):
@@ -36,65 +36,50 @@ except (ImportError, OSError, Exception):
         if status_code < 100 or status_code > 599:
             raise ValueError("Status code ngoài khoảng 100-599")
         reason = parts[2].decode("latin-1", "replace") if len(parts) > 2 else ""
-        headers = {}
+        
+        # FIX #1: Trả về list of tuples thay vì dict
+        headers_list = []
         for line in lines[1:]:
-            if not line:
-                continue
+            if not line: continue
             key, sep, value = line.partition(b":")
-            if not sep:
-                continue
+            if not sep: continue
             try:
                 k = key.strip().decode("latin-1").lower()
                 v = value.strip().decode("latin-1")
             except UnicodeDecodeError:
                 k = key.strip().decode("utf-8", "replace").lower()
                 v = value.strip().decode("utf-8", "replace")
-            if not k:
-                continue
-            if k in headers:
-                headers[k] = headers[k] + ", " + v
-            else:
-                headers[k] = v
-        return status_code, reason, http_version, headers
+            if not k: continue
+            headers_list.append((k, v))
+            
+        return status_code, reason, http_version, headers_list
 
     def parse_headers_raw(buf, start, end):
-        """Fallback: tìm header end rồi gọi parse_response_head."""
-        if end < 0:
-            end = 0
+        if end < 0: end = 0
         idx = buf.find(b"\r\n\r\n", start, end)
-        if idx < 0:
-            raise ValueError("Không tìm thấy header end")
+        if idx < 0: raise ValueError("Không tìm thấy header end")
         head_bytes = bytes(buf[start:idx])
         status, reason, version, headers = parse_response_head(head_bytes)
         body_offset = idx + 4
         return status, reason, version, headers, body_offset
 
     def urlencode_value(value):
-        _SAFE = frozenset(
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~"
-        )
+        _SAFE = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.~")
         result = []
         for byte in value.encode("utf-8"):
             char = chr(byte)
-            if char in _SAFE:
-                result.append(char)
-            elif char == " ":
-                result.append("+")
-            else:
-                result.append(f"%{byte:02X}")
+            if char in _SAFE: result.append(char)
+            elif char == " ": result.append("+")
+            else: result.append(f"%{byte:02X}")
         return "".join(result)
 
     def parse_chunk_size(line):
-        if len(line) > 8192:
-            raise ValueError("Chunk line too long")
+        if len(line) > 8192: raise ValueError("Chunk line too long")
         size_str = line.decode("ascii").split(";")[0].strip()
         return int(size_str, 16)
-
 
 def urlencode_dict(data):
     pairs = []
     for key, value in data.items():
-        pairs.append(
-            f"{urlencode_value(str(key))}={urlencode_value(str(value))}"
-        )
+        pairs.append(f"{urlencode_value(str(key))}={urlencode_value(str(value))}")
     return "&".join(pairs)

@@ -351,7 +351,7 @@ class Session:
         body: bytes,
     ) -> bytes:
         parts = [f"{method} {path} HTTP/1.1\r\n".encode("utf-8")]
-        for key, value in headers.items():
+        for key, value in headers.items_all():  # FIX: dùng items_all()
             parts.append(f"{key}: {value}\r\n".encode("utf-8"))
         parts.append(b"\r\n")
         if body:
@@ -359,18 +359,18 @@ class Session:
         return b"".join(parts)
 
     @staticmethod
-    def _decompress_body(headers: Dict[str, str], body: bytes) -> bytes:
-        import gzip
-        import zlib
+    def _decompress_body(headers, body: bytes) -> bytes:
         if not body:
             return body
         encoding = headers.get("content-encoding", "").lower()
         if "gzip" in encoding or "x-gzip" in encoding:
+            import gzip
             try:
                 return gzip.decompress(body)
             except OSError:
                 return body
         if "deflate" in encoding:
+            import zlib
             try:
                 return zlib.decompress(body)
             except zlib.error:
@@ -378,6 +378,14 @@ class Session:
                     return zlib.decompress(body, -zlib.MAX_WBITS)
                 except zlib.error:
                     return body
+        if "br" in encoding:
+            try:
+                import brotli
+                return brotli.decompress(body)
+            except ImportError:
+                return body
+            except Exception:
+                return body
         return body
 
     def _store_cookies(self, response: Response, url: str) -> None:
@@ -586,13 +594,16 @@ class AsyncSession:
     ) -> CaseInsensitiveHeaders:
         merged = CaseInsensitiveHeaders()
         merged.update(self._default_headers)
-
         if extra_headers:
             merged.update(extra_headers)
 
         cookie_header = self._cookie_jar.get_header_for_url(url)
         if cookie_header:
-            merged["Cookie"] = cookie_header
+            existing = merged.get("Cookie", "")
+            if existing:
+                merged["Cookie"] = existing + "; " + cookie_header
+            else:
+                merged["Cookie"] = cookie_header
 
         if auth is not None:
             merged_dict = merged.to_dict()
@@ -649,7 +660,7 @@ class AsyncSession:
             headers["Content-Length"] = str(len(body))
 
         parts = [f"{method} {path} HTTP/1.1\r\n".encode("utf-8")]
-        for key, value in headers.items():
+        for key, value in headers.items_all():
             parts.append(f"{key}: {value}\r\n".encode("utf-8"))
         parts.append(b"\r\n")
         if body:

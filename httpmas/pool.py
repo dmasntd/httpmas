@@ -26,7 +26,6 @@ from .tls_manager import TLSManager
 
 class Connection:
     """Đại diện một kết nối socket đồng bộ."""
-
     __slots__ = ("sock", "host", "port", "use_tls", "created_at", "last_used")
 
     def __init__(
@@ -73,8 +72,7 @@ class Connection:
 
 
 class ConnectionPool:
-    """Connection pool đồng bộ - FIX lỗi 1, 2, 5."""
-
+    """Connection pool đồng bộ"""
     def __init__(
         self,
         max_per_host: int = 10,
@@ -98,47 +96,31 @@ class ConnectionPool:
         return conn.idle_time > self._idle_timeout
 
     def _is_healthy(self, conn: Connection) -> bool:
-        """FIX #2: Health check nhẹ nhàng hơn.
-        
-        - Bỏ check SSLSocket.pending() > 0 (hiểu sai TLS data)
-        - Chỉ dùng select() để check EOF
-        - Không consume byte
-        """
+        """Health check chuẩn xác cho cả TCP và SSL."""
         sock = conn.sock
-        if sock is None:
-            return False
+        if sock is None: return False
+        try:
+            if sock.fileno() < 0: return False
+        except (OSError, ValueError): return False
 
         try:
-            if sock.fileno() < 0:
-                return False
-        except (OSError, ValueError):
-            return False
-
-        try:
-            # FIX #2: Chỉ dùng select() để phát hiện EOF
-            # Không check pending() cho SSLSocket
             readable, _, _ = select.select([sock], [], [], 0)
-
             if readable:
-                # Socket readable khi idle = server đã đóng (EOF)
-                # Thử peek 1 byte để xác nhận
-                try:
-                    if isinstance(sock, _ssl.SSLSocket):
-                        # SSLSocket: không dùng MSG_PEEK
-                        # readable + idle = EOF
+                if isinstance(sock, _ssl.SSLSocket):
+                    try:
+                        if sock.pending() == 0:
+                            return False
+                        return True
+                    except (_ssl.SSLError, OSError):
                         return False
-                    else:
-                        # Socket thường: peek 1 byte
+                else:
+                    try:
                         msg_peek = getattr(socket, "MSG_PEEK", 0x02)
                         data = sock.recv(1, msg_peek)
-                        # Nếu có data hoặc EOF (b"") → không healthy
                         return False
-                except (BlockingIOError, OSError):
-                    # BlockingIOError = không có data thực sự (false positive)
-                    return True
-
+                    except (BlockingIOError, OSError):
+                        return True
             return True
-
         except Exception:
             return False
 
@@ -185,8 +167,6 @@ class ConnectionPool:
             self._cleanup_expired_locked()
 
             while True:
-                # FIX #5: Dùng LIFO - pop() thay vì popleft()
-                # Connection nóng nhất (vừa dùng) được ưu tiên
                 conns = self._idle.get(key)
                 if conns:
                     conn = conns.pop()
@@ -195,7 +175,6 @@ class ConnectionPool:
                     if not conns:
                         self._idle.pop(key, None)
 
-                    # Check health khi ACQUIRE (không phải khi release)
                     if (
                         conn.sock is not None
                         and not self._is_expired(conn)
@@ -204,7 +183,6 @@ class ConnectionPool:
                         conn.mark_used()
                         return conn
 
-                    # Connection chết, bỏ qua
                     conn.close()
                     self._open_count = max(0, self._open_count - 1)
                     continue
@@ -235,13 +213,7 @@ class ConnectionPool:
             raise
 
     def release(self, conn: Connection, reusable: bool = True) -> None:
-        """FIX #1: KHÔNG gọi _is_healthy() khi release.
-        
-        Chỉ check:
-        - reusable flag (từ parser: Connection: close)
-        - idle timeout
-        - max per host
-        """
+        """Trả connection về pool hoặc đóng nếu không dùng được."""
         if conn is None:
             return
 
@@ -251,7 +223,6 @@ class ConnectionPool:
                 self._condition.notify_all()
                 return
 
-            # FIX #1: Không check health khi release
             can_pool = (
                 reusable
                 and not self._is_expired(conn)
@@ -297,7 +268,6 @@ class ConnectionPool:
 
 class PoolManager:
     """Quản lý pool + DNS + tạo socket."""
-
     def __init__(
         self,
         default_timeout: float = 10.0,
@@ -460,7 +430,6 @@ class PoolManager:
 
 class AsyncConnection:
     """Đại diện một kết nối async."""
-
     __slots__ = (
         "reader",
         "writer",
@@ -550,8 +519,7 @@ class AsyncConnection:
 
 
 class AsyncConnectionPool:
-    """Connection pool async - FIX lỗi 1, 5."""
-
+    """Connection pool async"""
     def __init__(
         self,
         max_per_host: int = 10,
@@ -620,8 +588,6 @@ class AsyncConnectionPool:
 
         async with self._lock:
             expired = self._cleanup_locked()
-            
-            # FIX #5: LIFO - pop() từ cuối list
             conn = None
             conns = self._idle.get(key)
             if conns:
@@ -646,9 +612,7 @@ class AsyncConnectionPool:
                     timeout=float(timeout),
                 )
         except asyncio.TimeoutError:
-            raise RequestsError(
-                "Hết thời gian chờ khi đợi connection async"
-            )
+            raise RequestsError("Hết thời gian chờ khi đợi connection async")
 
         try:
             conn = await connector(host, port, use_tls, timeout)
@@ -660,11 +624,9 @@ class AsyncConnectionPool:
             raise
 
     async def release(self, conn: AsyncConnection, reusable: bool = True) -> None:
-        """FIX #1: Không check health khi release."""
         if conn is None or conn.closed:
             return
 
-        # FIX #1: Chỉ check reusable flag + expired
         if reusable and not self._is_expired(conn):
             async with self._lock:
                 conns = self._idle.setdefault(conn.key, [])
@@ -708,7 +670,6 @@ class AsyncConnectionPool:
 
 class AsyncPoolManager:
     """Quản lý async pool + async DNS."""
-
     def __init__(
         self,
         default_timeout: float = 10.0,
