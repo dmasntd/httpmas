@@ -1,12 +1,3 @@
-"""
-Buffer optimization cho httpmas.
-
-Mục tiêu:
-- Giảm copy dữ liệu liên tục.
-- Dùng bytearray + offset tracking.
-- Dùng cho HTTP parser và các thành phần đọc buffer.
-"""
-
 from typing import Optional
 
 
@@ -29,22 +20,14 @@ class ByteBuffer:
         self._buf.extend(data)
 
     def find(self, sub: bytes) -> int:
-        """Tìm vị trí tương đối của sub trong buffer.
-
-        Trả về:
-            Vị trí tương đối, hoặc -1 nếu không tìm thấy.
-        """
+        """Tìm vị trí tương đối của sub trong buffer."""
         idx = self._buf.find(sub, self._offset)
         if idx < 0:
             return -1
         return idx - self._offset
 
     def read(self, count: Optional[int] = None) -> bytes:
-        """Đọc và tiêu thụ dữ liệu.
-
-        FIX: Không dùng memoryview.
-        FIX: _maybe_compact() tạo bytearray mới, không resize cũ.
-        """
+        """Đọc và tiêu thụ dữ liệu."""
         if count is None:
             end = len(self._buf)
         else:
@@ -73,12 +56,7 @@ class ByteBuffer:
         return data
 
     def _maybe_compact(self) -> None:
-        """Dọn buffer khi offset quá lớn.
-
-        FIX QUAN TRỌNG: Tạo bytearray MỚI thay vì del self._buf[:offset].
-        del/resize bytearray sẽ crash nếu có memoryview đang tham chiếu.
-        Tạo bytearray mới thì an toàn tuyệt đối.
-        """
+        """Dọn buffer khi offset quá lớn."""
         if self._offset > 8192 and self._offset * 2 > len(self._buf):
             self._buf = self._buf[self._offset:]
             self._offset = 0
