@@ -1,5 +1,3 @@
-"""DNS cache nội bộ cho httpmas."""
-
 import asyncio
 import socket
 import threading
@@ -10,14 +8,7 @@ from .exceptions import RequestsError
 
 
 class DNSCache:
-    """Cache kết quả DNS nội bộ.
-
-    Hỗ trợ:
-    - resolve() cho sync
-    - async_resolve() cho async
-    - clear()
-    - expire()
-    """
+    """Cache kết quả DNS nội bộ."""
 
     def __init__(
         self,
@@ -169,7 +160,6 @@ class DNSCache:
         """Resolve DNS cho async, không block event loop.
 
         Single-flight:
-        - Cache hit thì trả ngay.
         - Cache miss thì chỉ tạo 1 future cho host đó trên loop hiện tại.
         - Nhiều request cùng host sẽ await cùng future.
         """
