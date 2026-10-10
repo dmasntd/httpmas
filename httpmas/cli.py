@@ -1,11 +1,15 @@
-#By Nguyễn Tấn Dũng
+"""
+Giao diện dòng lệnh (CLI) cho httpmas.
+Banner cyberpunk với logo ASCII gradient,
+khung bảng neon căn chỉnh chính xác, màu viền đồng bộ 4 góc.
+"""
+
 import os
 import re
 import sys
 import time
 import shutil
 import platform
-
 from .version import __version__
 
 
@@ -131,6 +135,7 @@ class TableBuilder:
         style: str = "double",
         gradient: list = None,
     ) -> None:
+
         self.width = width if width else self.auto_width()
         self.border_color = border_color or TerminalColor.NEON_CYAN
         self.text_color = text_color or TerminalColor.NEUTRAL_WHITE
@@ -178,7 +183,7 @@ class TableBuilder:
             return "  " + TerminalColor.gradient_text(text, g)
         return "  " + self._c(self.border_color, text)
 
-    def separator(self, gradient: list = None) -> str
+    def separator(self, gradient: list = None) -> str:
         g = gradient or self.gradient
         text = (
             self.chars["lt"]
@@ -267,6 +272,10 @@ class TableBuilder:
         lines.append(self.bottom_border(g))
         return "\n".join(lines)
 
+
+# ============================================================
+# CLI BANNER
+# ============================================================
 class CLIBanner:
     LOGO_ART = [
         " ██   ██ ████████ ████████ ██████  ███    ███  █████  ███████ ",
@@ -275,7 +284,7 @@ class CLIBanner:
         " ██   ██    ██       ██    ██      ██  ██  ██ ██   ██      ██ ",
         " ██   ██    ██       ██    ██      ██      ██ ██   ██ ███████ ",
         " ",
-        "                                 ©Copyright by Nguyễn Tấn Dũng",
+        "                                ©Copyright by Nguyễn Tấn Dũng",
     ]
 
     LOGO_LINE_GRADIENTS = [
@@ -405,9 +414,9 @@ class CLIBanner:
         sys.stdout.flush()
 
 class CLIApp:
-
     @staticmethod
     def clear_screen() -> None:
+        """Xóa màn hình theo hệ điều hành."""
         if platform.system().lower() == "windows":
             os.system("cls")
         else:
@@ -535,7 +544,6 @@ class CLIApp:
     @staticmethod
     def run_info() -> None:
         import ssl
-        
         tb1 = TableBuilder(
             border_color=TerminalColor.NEON_CYAN,
             gradient=[(0, 255, 255), (138, 43, 226)],
