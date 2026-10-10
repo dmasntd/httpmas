@@ -95,7 +95,7 @@
 - Các bạn cũng có thể test và báo cáo tốc độ về cho chúng tôi biết để chúng tôi nâng cấp hơn
 
 ## Lưu ý
-- Bản v2.9.18 hết giá trị nâng cấp đổi sang ở bản v3.5.9 có nhánh riêng
+- Bản v2.9.18 hết giá trị nâng cấp đổi sang ở bản v3.6.5 có nhánh riêng
 - Vẫn lên cài bằng ``pip install httpmas`` để sử dụng bản mới nhất
 - Môi trường mạng yếu cũng phải có mức độ nếu yếu quá chúng tôi cũng không thể hỗ trợ
 - Chúng tôi cần thời gian phát triển lên hiện tại chỉ có hỗ trợ http1.1
@@ -115,7 +115,7 @@
 - Hiện tại tôi đang phát triển lên h2 và đang tích hợp cũng như thêm proxy. Tôi cần thời gian để tích hợp h2 và viết thêm một số xử lý riêng.
 - Có khả năng phần lõi tôi sẽ phát triển và đẩy mạnh hiệu năng hơn, khả năng này là cao vì nhận thấy tốc độ chưa đạt yêu cầu.
 - Đã thêm nhánh mới v3.6.5 nhánh này lưu giữ lại code tránh làm mất code và tránh xóa mất, vẫn đéo có file .c xử lý đâu nhé, tao còn đang tìm cách mã hóa nó chứ còn lâu đem lên đây
-- Vẫn xem code c bằng cách dump thư viện ra đọc nhé nhưng không liên quan vì sắp cập nhật mới
+- Vẫn xem được code .c các bác có thể tự cài thư viện về và tìm mở ra đọc nhé, tương lai nó cũng được share lên vì nâng cấp lại file này
 
 ---- 
 
