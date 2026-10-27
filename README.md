@@ -107,8 +107,7 @@
 - Xem tại docs: https://github.com/dmasntd/httpmas/blob/main/Docscument.md
 - Hiện tại bản cập nhật mới nhất chưa có proxy chúng tôi sẽ cập nhật sớm trong tương lai và 1 số xử lý đi cùng
 - Hiện tại tôi đang phát triển và hỗ trợ lên h2 và h3 nhưng phải nói rằng để làm được điều này rất khó lên chúng tôi mượn thư viện h2 và h3 của chuyên gia khác và tôi sẽ thay đổi lại cách dùng để các bạn thấy dễ dùng hơn, đây là dự định mới của tôi nó chưa được trình làng nhưng tôi sẽ làm nhanh và sớm nhất có thể
-- Hiện tại chỉ còn mình tôi trong dự án này bởi tác giả [MinhAnhs](https://github.com/manhscuti) đã rời bỏ dự án, mọi thứ đóng góp vẫn được tôn vinh. Hiện tại bản cập nhật lên h2 và h3 có thể được xếp ở v4 hoặc v5, các phiên bản này sẽ được hỗ trợ h2 và h3 như đã nói. Liên hệ qua Discord vì Telegram của tôi đang lỗi. Một lần nữa cảm ơn tác giả [MinhAnhs](https://github.com/manhscuti) đã hỗ trợ đóng góp trong dự án.
-- httpssr rename dsl
+- Hiện tại chỉ còn mình tôi trong dự án này bởi tác giả [MinhAnhs](https://github.com/manhscuti) đã rời bỏ dự án, mọi thứ đóng góp vẫn được tôn vinh. Một lần nữa cảm ơn tác giả [MinhAnhs](https://github.com/manhscuti) đã hỗ trợ đóng góp trong dự án.
 
 ----
 
@@ -118,6 +117,8 @@
 - Tích hợp h2 và thêm lõi hỗ trợ xử lý cho h2
 - Tích hợp xử lý cho bất đồng bộ (Async)
 - Fix lại hiệu năng và tăng độ ổn định chống gây lỗi chiếm đầy ram
+- Hiện tại đang sửa các lỗi xử lý và đã an toàn các bản 3.x.x sắp tới chỉ cập nhật lại lõi hiệu năng còn chưa tích hợp gì cả ngoại trừ có proxy trong đó.
+
 
 ---- 
 
