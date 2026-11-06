@@ -98,8 +98,8 @@
 - Bản v2.9.18 hết giá trị nâng cấp đổi sang ở bản v3.6.5 có nhánh riêng
 - Vẫn lên cài bằng ``pip install httpmas`` để sử dụng bản mới nhất
 - Môi trường mạng yếu cũng phải có mức độ nếu yếu quá chúng tôi cũng không thể hỗ trợ
-- Chúng tôi cần thời gian phát triển lên hiện tại chỉ có hỗ trợ http1.1
-- Chúng tôi cũng đang tập trung cho tốc độ và ổn định
+- Tôi cần thời gian phát triển lên hiện tại chỉ có hỗ trợ http1.1
+- Tôi cũng đang tập trung cho tốc độ và ổn định
 
 ----
 
@@ -107,7 +107,7 @@
 - Xem tại docs: https://github.com/dmasntd/httpmas/blob/main/Docscument.md
 - Hiện tại bản cập nhật mới nhất chưa có proxy chúng tôi sẽ cập nhật sớm trong tương lai và 1 số xử lý đi cùng
 - Hiện tại tôi đang phát triển và hỗ trợ lên h2 và h3 nhưng phải nói rằng để làm được điều này rất khó lên chúng tôi mượn thư viện h2 và h3 của chuyên gia khác và tôi sẽ thay đổi lại cách dùng để các bạn thấy dễ dùng hơn, đây là dự định mới của tôi nó chưa được trình làng nhưng tôi sẽ làm nhanh và sớm nhất có thể
-- Hiện tại chỉ còn mình tôi trong dự án này bởi tác giả [MinhAnhs](https://github.com/manhscuti) đã rời bỏ dự án, mọi thứ đóng góp vẫn được tôn vinh. Một lần nữa cảm ơn tác giả [MinhAnhs](https://github.com/manhscuti) đã hỗ trợ đóng góp trong dự án.
+
 
 ----
 
@@ -131,6 +131,7 @@
 
 # Đóng góp
 - [manhscuti](https://github.com/dma17ntd)
+- Hiện tại chỉ còn mình tôi trong dự án này bởi tác giả [MinhAnhs](https://github.com/manhscuti) đã rời bỏ dự án, mọi thứ đóng góp vẫn được tôn vinh. Một lần nữa cảm ơn tác giả [MinhAnhs](https://github.com/dma17ntd) đã hỗ trợ đóng góp trong dự án.
 
 - Rất cảm ơn các bạn đã hỗ trợ 
 ---
